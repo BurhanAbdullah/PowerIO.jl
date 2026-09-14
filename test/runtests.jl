@@ -30,5 +30,6 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_updates.jl")            # typed updates and apply_updates!
     include("test_matrix.jl")             # DC calculations and admittance matrices
     include("test_bridges.jl")            # PowerModels and ExaModelsPower bridges
+    include("test_library_resolution.jl") # fail-closed native library boundary
     include("test_aqua.jl")               # Aqua quality checks
 end
