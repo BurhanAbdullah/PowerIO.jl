@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.11.3
+
+- Bind the PSS/E contingency analysis files. `ContingencySet`, `SubsystemSet`,
+  and `MonitoredSet` read `.con`, `.sub`, and `.mon` text and write it back;
+  `resolve_contingencies` binds a set to a balanced network and reports every
+  action that named no element, `expand_contingencies` turns automatic
+  specifications into explicit cases, and `select_subsystem_buses` gives the
+  buses one named subsystem selects.
+- Bind the geographic layer. `parse_geo` reads a coordinate document and
+  `apply_geo_layer` places its coordinates on a balanced or multiconductor
+  network module, reporting what matched. A geographic file now parses as
+  `PioModule{GeoLayer}` instead of an `UnknownValue`.
+- Bind the detailed connectivity tables. `net.detailed_connectivity` now reads
+  all 28 tables node breaker formats such as XIIDM and CGMES retain, from
+  substations and voltage levels through terminals, switches, operational
+  limits, and tap changers to boundary lines, tie lines, DC equipment, and
+  AC/DC converters, as `Elements` vectors of immutable records.
+- Read the scheduling inputs of an AC SCUC instance through `instance.inputs`:
+  devices with their periods, energy cost blocks and reserve costs, shunts,
+  branch switching costs, transformer controls, active and reactive reserve
+  zones, contingencies, and the instance wide violation costs.
+- Set the total active demand at one bus with
+  `apply_bus_load_active_power`, spread over the loads there proportionally or
+  equally.
+- Read the network a calculation solution is defined over as
+  `solution.network`, for every solution type.
+- Report the structural type name of a module's value as `m.type_name`.
+- Write diagnostics as JSON ready dictionaries with `diagnostic_record` and
+  `diagnostic_records`, using the same keys as the Python binding.
+- Generate the raw C layer. `src/LibPowerIO.jl` now comes from
+  `powerio-capi/include/powerio.h` through `gen/generate.jl`, replacing the
+  hand-written struct mirrors and call signatures, so a header change shows up
+  as a diff instead of a struct read at the wrong offsets.
+- Check entry point coverage: every generated entry point is either called by
+  the binding or listed in `gen/unbound_entry_points.txt` with a reason.
+- Raise the Julia floor to 1.10.
+- Add Dependabot updates for GitHub Actions and the Julia environments.
+- Coordinate the Julia package with PowerIO 0.11.3, whose C ABI 7 adds the
+  contingency analysis, subsystem selection and geo layer entry points
+  additively. Every entry point Python reaches over the C ABI is now bound in
+  Julia, and `gen/unbound_entry_points.txt` states the reason for each one
+  that is not.
+
+C ABI 7 and PowerIO IR version 2 remain unchanged.
+
 ## 0.11.2
 
 - Maintenance updates and regression coverage.

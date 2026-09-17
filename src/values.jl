@@ -113,6 +113,61 @@ const CalculationSolution = Union{DcPfSolution,AcPfSolution,DcOpfSolution,AcOpfS
                                   SocwrOpfSolution,McAcPfSolution,McAcOpfSolution,LinDist3FlowOpfSolution,AcScucSolution}
 
 """
+    ContingencySet
+
+The cases of one PSS/E `.con` file. `set.cases` are the case names in the
+file's own order, `set.text` writes the set back as `.con` text,
+`set.diagnostics` are the reader's notes, and `length(set)` is the case count.
+[`resolve_contingencies`](@ref) binds a set to a network and
+[`expand_contingencies`](@ref) turns its automatic specifications into
+explicit cases.
+"""
+struct ContingencySet
+    handle::ContingencySetHandle
+    diagnostics::Vector{Diagnostic}
+end
+
+"""
+    SubsystemSet
+
+The bus selections of one PSS/E `.sub` file. `set.names` are the subsystem
+names in the file's own order, `set.text` writes the set back as `.sub` text,
+`set.diagnostics` are the reader's notes, and `length(set)` is the subsystem
+count. [`select_subsystem_buses`](@ref) evaluates one named subsystem against
+a network.
+"""
+struct SubsystemSet
+    handle::SubsystemSetHandle
+    diagnostics::Vector{Diagnostic}
+end
+
+"""
+    MonitoredSet
+
+The statements of one PSS/E `.mon` file. `set.statement_count` is how many
+statements the reader kept, `set.text` writes the set back as `.mon` text, and
+`set.diagnostics` are the reader's notes.
+"""
+struct MonitoredSet
+    handle::MonitoredSetHandle
+    diagnostics::Vector{Diagnostic}
+end
+
+"""
+    GeoLayer
+
+One coordinate document kept beside a case: points for buses and routes for
+branches in a single coordinate space, keyed by element identity.
+`layer.geojson` writes the canonical GeoJSON FeatureCollection and
+`layer.diagnostics` are the reader's notes. [`parse_geo`](@ref) reads one from
+text and [`apply_geo_layer`](@ref) places its coordinates on a network module.
+"""
+struct GeoLayer
+    handle::GeoLayerHandle
+    diagnostics::Vector{Diagnostic}
+end
+
+"""
     UnknownValue
 
 A module value whose structural type name this PowerIO.jl release does not
@@ -154,6 +209,10 @@ const _SOLUTION_TYPES = Dict(
 function _julia_type(name::AbstractString)
     name == "powerio.BalancedNetwork" && return BalancedNetwork
     name == "powerio.MulticonductorNetwork" && return MulticonductorNetwork
+    name == "powerio.ContingencySet" && return ContingencySet
+    name == "powerio.SubsystemSet" && return SubsystemSet
+    name == "powerio.MonitoredSet" && return MonitoredSet
+    name == "powerio.GeoLayer" && return GeoLayer
     haskey(_INSTANCE_TYPES, name) && return _INSTANCE_TYPES[name][1]
     haskey(_SOLUTION_TYPES, name) && return _SOLUTION_TYPES[name][1]
     for (prefix, wrapper) in (("powerio.TimeSeries<", TimeSeries),
@@ -168,18 +227,17 @@ function _julia_type(name::AbstractString)
     return nothing
 end
 
-# Borrow one typed handle from a value handle through `sym`.
-function _borrow(lib::AbstractString, value::ValueHandle, sym::Symbol)
+# Borrow one typed handle from a value handle through `entry`.
+function _borrow(lib::AbstractString, value::ValueHandle, entry)
     return @with_handles value _checked(lib) do err
-        ccall(_library_symbol(lib, sym), Ptr{Cvoid}, (Ptr{Cvoid}, Ref{Ptr{Cvoid}}), _ptr(value), err)
+        @capi lib entry(_ptr(value), err)
     end
 end
 
 # Wrap a value handle as the Julia value its structural type name selects.
 # `owner` is the module the value came from when there is one.
 function _wrap_value(lib::AbstractString, value::ValueHandle, owner::Union{ModuleHandle,Nothing})
-    name = @with_handles value _str(ccall(_library_symbol(lib, :pio_value_type_name), PioStringView,
-                                         (Ptr{Cvoid},), _ptr(value)))
+    name = @with_handles value _str(@capi lib :pio_value_type_name(_ptr(value)))
     T = _julia_type(name)
     T === nothing && return UnknownValue(name, value)
     wrapped = _wrap_as(T, lib, value, owner)
@@ -188,17 +246,27 @@ function _wrap_value(lib::AbstractString, value::ValueHandle, owner::Union{Modul
 end
 
 _wrap_as(::Type{BalancedNetwork}, lib, value, owner) =
-    BalancedNetwork(BalancedNetworkHandle(_borrow(lib, value, :pio_value_balanced_network), lib), owner)
+    BalancedNetwork(BalancedNetworkHandle(_borrow(lib, value, Val(:pio_value_balanced_network)), lib), owner)
 _wrap_as(::Type{MulticonductorNetwork}, lib, value, owner) =
-    MulticonductorNetwork(MulticonductorNetworkHandle(_borrow(lib, value, :pio_value_multiconductor_network), lib), owner)
+    MulticonductorNetwork(MulticonductorNetworkHandle(_borrow(lib, value, Val(:pio_value_multiconductor_network)), lib), owner)
+# A contingency analysis file or a geographic layer carries no reader notes
+# when it comes from a module: the module holds them.
+_wrap_as(::Type{ContingencySet}, lib, value, owner) =
+    ContingencySet(ContingencySetHandle(_borrow(lib, value, Val(:pio_value_contingency_set)), lib), Diagnostic[])
+_wrap_as(::Type{SubsystemSet}, lib, value, owner) =
+    SubsystemSet(SubsystemSetHandle(_borrow(lib, value, Val(:pio_value_subsystem_set)), lib), Diagnostic[])
+_wrap_as(::Type{MonitoredSet}, lib, value, owner) =
+    MonitoredSet(MonitoredSetHandle(_borrow(lib, value, Val(:pio_value_monitored_set)), lib), Diagnostic[])
+_wrap_as(::Type{GeoLayer}, lib, value, owner) =
+    GeoLayer(GeoLayerHandle(_borrow(lib, value, Val(:pio_value_geo_layer)), lib), Diagnostic[])
 _wrap_as(::Type{TimeSeries{T}}, lib, value, owner) where {T} =
-    TimeSeries{T}(TimeSeriesHandle(_borrow(lib, value, :pio_value_time_series), lib))
+    TimeSeries{T}(TimeSeriesHandle(_borrow(lib, value, Val(:pio_value_time_series)), lib))
 _wrap_as(::Type{ScenarioSet{T}}, lib, value, owner) where {T} =
-    ScenarioSet{T}(ScenarioSetHandle(_borrow(lib, value, :pio_value_scenario_set), lib))
+    ScenarioSet{T}(ScenarioSetHandle(_borrow(lib, value, Val(:pio_value_scenario_set)), lib))
 _wrap_as(::Type{OperatingPoint{BalancedNetwork}}, lib, value, owner) =
-    OperatingPoint{BalancedNetwork}(OperatingPointHandle(_borrow(lib, value, :pio_value_balanced_operating_point), lib))
+    OperatingPoint{BalancedNetwork}(OperatingPointHandle(_borrow(lib, value, Val(:pio_value_balanced_operating_point)), lib))
 _wrap_as(::Type{OperatingPoint{MulticonductorNetwork}}, lib, value, owner) =
-    OperatingPoint{MulticonductorNetwork}(OperatingPointHandle(_borrow(lib, value, :pio_value_multiconductor_operating_point), lib))
+    OperatingPoint{MulticonductorNetwork}(OperatingPointHandle(_borrow(lib, value, Val(:pio_value_multiconductor_operating_point)), lib))
 function _wrap_as(::Type{T}, lib, value, owner) where {T<:CalculationInstance}
     sym = _INSTANCE_TYPES[_type_name(T)][2]
     return T(CalculationInstanceHandle(_borrow(lib, value, sym), lib))
@@ -211,6 +279,10 @@ end
 # The structural type name of a bound Julia type.
 _type_name(::Type{BalancedNetwork}) = "powerio.BalancedNetwork"
 _type_name(::Type{MulticonductorNetwork}) = "powerio.MulticonductorNetwork"
+_type_name(::Type{ContingencySet}) = "powerio.ContingencySet"
+_type_name(::Type{SubsystemSet}) = "powerio.SubsystemSet"
+_type_name(::Type{MonitoredSet}) = "powerio.MonitoredSet"
+_type_name(::Type{GeoLayer}) = "powerio.GeoLayer"
 _type_name(::Type{TimeSeries{T}}) where {T} = "powerio.TimeSeries<" * _type_name(T) * ">"
 _type_name(::Type{ScenarioSet{T}}) where {T} = "powerio.ScenarioSet<" * _type_name(T) * ">"
 _type_name(::Type{OperatingPoint{T}}) where {T} = "powerio.OperatingPoint<" * _type_name(T) * ">"

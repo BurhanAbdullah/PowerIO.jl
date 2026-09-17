@@ -87,7 +87,8 @@ Node breaker formats (XIIDM, CGMES) have substations, voltage levels,
 terminals, switches, and operational limits beyond the bus branch tables.
 `net.detailed_connectivity` is `nothing` for a bus branch source and a
 [`DetailedConnectivity`](@ref) otherwise; its `counts` property lists the
-table lengths. The typed tables are not bound in this release.
+table lengths and each of its 28 tables reads typed records. See
+[Detailed connectivity](connectivity.md).
 
 ```@docs
 BalancedNetwork
@@ -128,15 +129,5 @@ to_graph
 
 `bus.location` provides x/y coordinates, and `net.geo` names their coordinate
 space. Balanced branches and multiconductor lines expose optional `route`
-points. Geographic x/y means longitude/latitude; drawing x/y retains drawing
-units. PowerIO IR preserves these values.
-
-PowerIO 0.11.1 reads supported PWB bus locations and the BMOPFTools proposed
-Point/LineString values. Explicit BMOPF output writes geometry under the
-schema-valid `extras.geojson` location. Same-type source emission retains source
-bytes; after changes, the typed coordinates determine the output.
-
-A geographic file or a PWD drawing currently appears as a `PioModule{UnknownValue}`
-with `type_name == "powerio.GeoLayer"`. It can still be serialized and emitted
-through the ordinary module methods. Typed bus locations and line paths remain
-available on the electrical networks.
+points. [Geographic layers](geo.md) covers the coordinate documents kept beside
+a case and how their coordinates reach a network.

@@ -1,0 +1,132 @@
+# Entry points src/LibPowerIO.jl declares that the hand-written sources do not
+# call, one per line as `name<TAB>reason`. test/test_capi_coverage.jl fails when
+# a generated entry point is in neither this file nor the sources, so a new
+# powerio entry point has to be either bound or listed here with a reason.
+
+# Handle reference counting. A Julia handle owns exactly one reference and
+# releases it; nothing in the binding takes a second one.
+pio_ac_opf_preparation_retain	owns one reference, never retains
+pio_active_power_retain	owns one reference, never retains
+pio_apparent_power_retain	owns one reference, never retains
+pio_artifact_retain	owns one reference, never retains
+pio_balanced_network_retain	owns one reference, never retains
+pio_calculation_instance_retain	owns one reference, never retains
+pio_calculation_solution_retain	owns one reference, never retains
+pio_calculation_update_retain	owns one reference, never retains
+pio_component_id_retain	owns one reference, never retains
+pio_contingency_resolution_retain	owns one reference, never retains
+pio_contingency_set_retain	owns one reference, never retains
+pio_dc_operators_retain	owns one reference, never retains
+pio_dc_opf_preparation_retain	owns one reference, never retains
+pio_destination_retain	owns one reference, never retains
+pio_detailed_connectivity_retain	owns one reference, never retains
+pio_diagnostics_retain	owns one reference, never retains
+pio_emit_result_retain	owns one reference, never retains
+pio_error_retain	owns one reference, never retains
+pio_geo_apply_report_retain	owns one reference, never retains
+pio_geo_layer_retain	owns one reference, never retains
+pio_json_value_retain	owns one reference, never retains
+pio_module_retain	owns one reference, never retains
+pio_monitored_set_retain	owns one reference, never retains
+pio_multiconductor_network_retain	owns one reference, never retains
+pio_network_update_retain	owns one reference, never retains
+pio_operating_point_retain	owns one reference, never retains
+pio_operating_point_update_retain	owns one reference, never retains
+pio_reactive_power_retain	owns one reference, never retains
+pio_scenario_set_retain	owns one reference, never retains
+pio_source_retain	owns one reference, never retains
+pio_sparse_matrix_retain	owns one reference, never retains
+pio_string_retain	owns one reference, never retains
+pio_subsystem_set_retain	owns one reference, never retains
+pio_time_series_retain	owns one reference, never retains
+pio_update_change_retain	owns one reference, never retains
+pio_update_report_retain	owns one reference, never retains
+pio_value_retain	owns one reference, never retains
+pio_vector_retain	owns one reference, never retains
+
+# Superseded alternates. The binding calls the replacement instead.
+pio_calc_branch_flow_dc	superseded by the pio_dc_operators_* entry points
+pio_calc_branch_flow_matrix	superseded by the pio_dc_operators_* entry points
+pio_calc_branch_phase_shift_injection	superseded by the pio_dc_operators_* entry points
+pio_calc_branch_susceptances	superseded by the pio_dc_operators_* entry points
+pio_calc_bus_injection_dc	superseded by the pio_dc_operators_* entry points
+pio_calc_bus_phase_shift_injection	superseded by the pio_dc_operators_* entry points
+pio_calc_bus_susceptance_matrix	superseded by the pio_dc_operators_* entry points
+pio_calc_incidence_matrix	superseded by the pio_dc_operators_* entry points
+pio_multiconductor_network_bus_count	superseded by pio_multiconductor_network_counts
+pio_multiconductor_network_generator_count	superseded by pio_multiconductor_network_counts
+pio_multiconductor_network_line_count	superseded by pio_multiconductor_network_counts
+pio_multiconductor_network_load_count	superseded by pio_multiconductor_network_counts
+pio_value_is_type	superseded by comparing pio_value_type_name
+
+# Families the C ABI exposes that neither the Julia nor the Python binding
+# wraps. Reading them needs a Julia type for the result first.
+pio_ac_opf_preparation_branch_at	OPF preparation is C only
+pio_ac_opf_preparation_bus_at	OPF preparation is C only
+pio_ac_opf_preparation_generator_at	OPF preparation is C only
+pio_ac_opf_preparation_reference_buses	OPF preparation is C only
+pio_ac_opf_preparation_release	OPF preparation is C only
+pio_ac_opf_preparation_skipped_zero_impedance	OPF preparation is C only
+pio_ac_opf_preparation_storage_at	OPF preparation is C only
+pio_ac_opf_preparation_summary	OPF preparation is C only
+pio_build_ac_opf_preparation	OPF preparation is C only
+pio_build_dc_opf_preparation	OPF preparation is C only
+pio_dc_opf_preparation_branch_at	OPF preparation is C only
+pio_dc_opf_preparation_bus_at	OPF preparation is C only
+pio_dc_opf_preparation_generator_at	OPF preparation is C only
+pio_dc_opf_preparation_reference_buses	OPF preparation is C only
+pio_dc_opf_preparation_release	OPF preparation is C only
+pio_dc_opf_preparation_skipped_zero_impedance	OPF preparation is C only
+pio_dc_opf_preparation_summary	OPF preparation is C only
+pio_module_extension_at	module extensions and source maps are C only
+pio_module_extension_count	module extensions and source maps are C only
+pio_module_extension_value_at	module extensions and source maps are C only
+pio_module_source_map_at	module extensions and source maps are C only
+pio_module_source_map_count	module extensions and source maps are C only
+pio_module_source_map_span_at	module extensions and source maps are C only
+pio_module_history_parameter_value_at	history parameter values are C only
+pio_schema_report	the schema report is C only
+pio_mc_ac_pf_instance_active_control_at	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_active_control_count	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_isolated_terminal_at	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_isolated_terminal_count	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_load_at	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_load_count	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_load_terminal_at	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_source_at	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_source_count	multiconductor AC power flow instance tables are C only
+pio_mc_ac_pf_instance_source_terminal_at	multiconductor AC power flow instance tables are C only
+pio_calculation_instance_active_constraint_at	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_active_constraint_count	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_active_constraint_identity_at	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_has_initial_point	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_initial_point	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_objective_term_at	instance constraints, objective terms and initial points are C only
+pio_calculation_instance_objective_term_count	instance constraints, objective terms and initial points are C only
+pio_ac_pf_instance_bus_specification_at	power flow bus specifications and susceptance formulas are C only
+pio_ac_pf_instance_bus_specification_count	power flow bus specifications and susceptance formulas are C only
+pio_dc_opf_instance_branch_susceptance_formula	power flow bus specifications and susceptance formulas are C only
+pio_dc_pf_instance_branch_susceptance_formula	power flow bus specifications and susceptance formulas are C only
+pio_dc_pf_instance_bus_specification_at	power flow bus specifications and susceptance formulas are C only
+pio_dc_pf_instance_bus_specification_count	power flow bus specifications and susceptance formulas are C only
+pio_json_value_array_at	JSON value accessors are C only
+pio_json_value_get	JSON value accessors are C only
+pio_json_value_object_entry_at	JSON value accessors are C only
+pio_json_value_object_value_at	JSON value accessors are C only
+pio_scenario_set_element_type	collection element type readers are C only
+pio_time_series_element_type	collection element type readers are C only
+pio_operating_point_get_value	operating point value and type name are C only
+pio_operating_point_type_name	operating point value and type name are C only
+pio_calculation_solution_type_name	the solution type name is C only
+pio_dc_operators_n_buses	the bus axis length comes from pio_dc_operators_bus_ids
+pio_active_power_unit	quantity unit and value readers are C only
+pio_active_power_value	quantity unit and value readers are C only
+pio_apparent_power_unit	quantity unit and value readers are C only
+pio_apparent_power_value	quantity unit and value readers are C only
+pio_reactive_power_unit	quantity unit and value readers are C only
+pio_reactive_power_value	quantity unit and value readers are C only
+
+# Lookups by source identity. A Dict built over the decoded tables serves them.
+pio_ac_scuc_instance_contingency_get	a Dict over instance.inputs covers the lookup by source identity
+pio_ac_scuc_instance_device_get	a Dict over instance.inputs covers the lookup by source identity
+pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by source identity
