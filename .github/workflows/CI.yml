@@ -23,6 +23,10 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
       - uses: julia-actions/cache@a7bed9df697e5d7309d68afe7542a87621a8b6c8 # v3.3.0
+        with:
+          # PR workflows using the read-only GITHUB_TOKEN cannot delete old
+          # caches. Disable cache deletion so fork/PR runs do not emit 403s.
+          delete-old-caches: false
       # Build the C ABI from a sibling powerio checkout so the ccall tests run for
       # real. The probe checks out eigenergy/powerio anonymously when it is public;
       # while it is private, add a token with read access to it as the
@@ -123,6 +127,9 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@a7bed9df697e5d7309d68afe7542a87621a8b6c8 # v3.3.0
+        with:
+          # PR workflows use a read-only token; avoid cleanup calls that return 403.
+          delete-old-caches: false
       # The module loads without the C library (resolution is lazy and
       # doctest=false), so the docs build needs no Rust toolchain.
       - name: Instantiate docs environment
