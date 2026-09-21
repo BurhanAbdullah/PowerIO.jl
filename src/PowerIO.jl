@@ -34,6 +34,31 @@ using Preferences: @load_preference, load_preference, set_preferences!
 import Libdl
 import SparseArrays
 
+# The raw C ABI 7 layer. `LibPowerIO` is a submodule, not part of the public
+# API; only the view structs the element tables read and `PioError` come into
+# this namespace by name. Entry points are called through `@capi`.
+include("LibPowerIO.jl")
+using .LibPowerIO: LibPowerIO, PioError, PioActivePowerControlView, PioBalancedAreaView,
+    PioBalancedBranchView, PioBalancedBusView, PioBalancedGeneratorView, PioBalancedGeoView,
+    PioBalancedHvdcConverterView, PioBalancedHvdcView, PioBalancedLoadView,
+    PioBalancedLocationView, PioBalancedShuntView, PioBalancedStaticVarCompensatorView,
+    PioBalancedStorageView, PioBalancedSwitchView, PioBalancedThreeWindingTransformerView,
+    PioBranchRatingView, PioByteView, PioComponentIdView, PioControlProfileView,
+    PioDetailedConnectivityCountsView, PioDiagnosticSpanView, PioF64View,
+    PioGeneratorCapabilityView, PioGeneratorCostView, PioInverterBasedResourceView,
+    PioLinDist3FlowConductorView, PioLinDist3FlowNodeView, PioModuleHistoryEntryView,
+    PioModuleHistoryParameterView, PioModuleProducerView, PioModuleSourceView,
+    PioMulticonductorBusView, PioMulticonductorCapacitorView, PioMulticonductorCommandView,
+    PioMulticonductorGeneratorView, PioMulticonductorGeoView, PioMulticonductorLineCodeView,
+    PioMulticonductorLineView, PioMulticonductorLoadView, PioMulticonductorLocationView,
+    PioMulticonductorNetworkCountsView, PioMulticonductorShuntView,
+    PioMulticonductorSwitchView, PioMulticonductorTransformerView,
+    PioMulticonductorTransformerWindingView, PioMulticonductorUntypedObjectView,
+    PioMulticonductorUntypedPropertyView, PioShuntBlockView, PioSizeView,
+    PioStringPropertyView, PioStringView, PioTerminalReferenceView,
+    PioThreeWindingTransformerImpedanceView, PioThreeWindingTransformerWindingView,
+    PioTransformerControlView, PioVoltageSourceView
+
 # Operations. `parse` extends `Base.parse` and is not exported.
 export PioModule, emit, serialize, deserialize
 
@@ -92,8 +117,30 @@ export to_powermodels, from_powermodels, build_powermodels_ref, repair_powermode
 # Library resolution.
 export set_library!, clear_library!, abi_version, library_version, library_available
 
-include("views.jl")          # C struct mirrors and span conversions
-include("capi.jl")           # library resolution and the ABI handshake
+# Detailed connectivity tables.
+export OmittedField, ComponentMetadata, ComponentAlias, ExternalIdentifier,
+       Subnetwork, CaseMetadata, Substation, VoltageLevel, BusBreakerBus, CalculatedBus,
+       ConnectivityNode, BusbarSection, Junction, DetailedTerminal, TopologySwitch,
+       TopologyEndpoint, InternalConnection, OperationalLimitGroup, LoadingLimits,
+       TemporaryLimit, TapChanger, TapChangerStep, EquipmentReactiveLimits, ReactiveLimits,
+       ReactiveCapabilityCurvePoint, BoundaryLine, BoundaryLineGeneration, TieLine,
+       DcConverterUnit, DcNode, DcEquipment, DcTerminal, AcDcConverter, DroopCurveSegment
+
+# AC SCUC inputs, bus load updates, diagnostic records.
+export ScucInputs, ScucDevice, ScucDevicePeriod, ScucEnergyCostBlock, ScucReserveCosts,
+       ScucRampLimits, ScucReserveLimits, ScucInitialCommitment, ScucReactiveCapability,
+       ScucStartupCostAdjustment, ScucStartupLimit, ScucEnergyRequirement, ScucShunt,
+       ScucBranchSwitchingCost, ScucTransformerControl, ScucActiveReserveZone,
+       ScucReactiveReserveZone, ScucContingency, ScucViolationCosts,
+       apply_bus_load_active_power, diagnostic_record, diagnostic_records
+
+# Contingency analysis files and geographic layers.
+export ContingencySet, SubsystemSet, MonitoredSet, ContingencyResolution,
+       ContingencyCaseResult, ContingencyComponent, UnresolvedAction,
+       resolve_contingencies, expand_contingencies, select_subsystem_buses,
+       GeoLayer, GeoApplyReport, parse_geo, apply_geo_layer
+
+include("capi.jl")           # library resolution, entry point calls, the ABI handshake
 include("handles.jl")        # owned handle types with release finalizers
 include("diagnostics.jl")    # Diagnostic and SourceSpan
 include("errors.jl")         # PowerIOError and the checked call helpers
@@ -101,11 +148,15 @@ include("values.jl")         # the value type tree and structural name dispatch
 include("module.jl")         # PioModule, parse, deserialize, records
 include("emit.jl")           # emit, serialize, EmitResult, Artifact
 include("network.jl")        # BalancedNetwork properties and element structs
+include("connectivity.jl")   # DetailedConnectivity tables and their record structs
 include("multiconductor.jl") # MulticonductorNetwork properties and element structs
+include("geo.jl")            # geographic layers and their application to a module
 include("dense.jl")          # to_dense
 include("graphs.jl")         # to_graph
 include("collections.jl")    # TimeSeries, ScenarioSet, OperatingPoint
+include("contingency.jl")    # PSS/E contingency, subsystem, and monitored sets
 include("instances.jl")      # calculation instances, solutions, to_*_instance
+include("scuc.jl")           # AC SCUC instance inputs
 include("updates.jl")        # typed updates and apply_updates!
 include("calc.jl")           # the eight DC calculations from the library
 include("ybus.jl")           # admittance matrices assembled in Julia

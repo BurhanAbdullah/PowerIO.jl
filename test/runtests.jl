@@ -20,6 +20,7 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_release.jl")            # Project.toml and changelog release guard
     include("test_release_automation.jl") # reviewed intent and artifact state machine
     include("test_public_api.jl")         # the exported surface
+    include("test_capi_coverage.jl")      # every generated entry point is bound or exempt
     include("test_operations.jl")         # parse, emit, serialize, deserialize
     include("test_network.jl")            # BalancedNetwork element tables
     include("test_geography.jl")
@@ -28,6 +29,10 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_lindist3flow.jl")
     include("test_handle_operations.jl")
     include("test_updates.jl")            # typed updates and apply_updates!
+    include("test_connectivity.jl")       # DetailedConnectivity tables
+    include("test_scuc.jl")               # AC SCUC instance inputs
+    include("test_contingency.jl")        # PSS/E contingency, subsystem, monitored sets
+    include("test_geo.jl")                # geographic layers
     include("test_matrix.jl")             # DC calculations and admittance matrices
     include("test_bridges.jl")            # PowerModels and ExaModelsPower bridges
     include("test_aqua.jl")               # Aqua quality checks

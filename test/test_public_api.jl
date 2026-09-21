@@ -49,6 +49,27 @@ const EXPORTED_NAMES = Set([
     :to_powerdata, :to_ac_power_data,
     # library resolution
     :set_library!, :clear_library!, :abi_version, :library_version, :library_available,
+    # detailed connectivity tables
+    :OmittedField, :ComponentMetadata, :ComponentAlias, :ExternalIdentifier,
+    :Subnetwork, :CaseMetadata, :Substation, :VoltageLevel, :BusBreakerBus, :CalculatedBus,
+    :ConnectivityNode, :BusbarSection, :Junction, :DetailedTerminal, :TopologySwitch,
+    :TopologyEndpoint, :InternalConnection, :OperationalLimitGroup, :LoadingLimits,
+    :TemporaryLimit, :TapChanger, :TapChangerStep, :EquipmentReactiveLimits, :ReactiveLimits,
+    :ReactiveCapabilityCurvePoint, :BoundaryLine, :BoundaryLineGeneration, :TieLine,
+    :DcConverterUnit, :DcNode, :DcEquipment, :DcTerminal, :AcDcConverter, :DroopCurveSegment,
+    # AC SCUC instance inputs
+    :ScucInputs, :ScucDevice, :ScucDevicePeriod, :ScucEnergyCostBlock, :ScucReserveCosts,
+    :ScucRampLimits, :ScucReserveLimits, :ScucInitialCommitment, :ScucReactiveCapability,
+    :ScucStartupCostAdjustment, :ScucStartupLimit, :ScucEnergyRequirement, :ScucShunt,
+    :ScucBranchSwitchingCost, :ScucTransformerControl, :ScucActiveReserveZone,
+    :ScucReactiveReserveZone, :ScucContingency, :ScucViolationCosts,
+    # bus load updates and diagnostic records
+    :apply_bus_load_active_power, :diagnostic_record, :diagnostic_records,
+    # contingency analysis files and geographic layers
+    :ContingencySet, :SubsystemSet, :MonitoredSet, :ContingencyResolution,
+    :ContingencyCaseResult, :ContingencyComponent, :UnresolvedAction,
+    :resolve_contingencies, :expand_contingencies, :select_subsystem_buses,
+    :GeoLayer, :GeoApplyReport, :parse_geo, :apply_geo_layer,
 ])
 
 # Names the 0.10 binding exported and 0.11 removes. None may be defined.
