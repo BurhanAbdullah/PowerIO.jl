@@ -11,6 +11,15 @@
     end
     @test err isa Exception
 
-    # `library_available` is intentionally fail-closed.
+    # `library_available` is intentionally fail-closed and can also probe an
+    # explicit candidate without changing the active resolution.
+    missing = joinpath(@__DIR__, "definitely-not-a-powerio-library")
+    @test PowerIO.library_available(missing) === false
     @test PowerIO.library_available() isa Bool
+
+    if LIBRARY_AVAILABLE
+        lib = PowerIO._checked_lib()
+        @test PowerIO.library_available(lib) === true
+        @test PowerIO._checked_lib() == lib
+    end
 end
