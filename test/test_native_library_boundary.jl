@@ -38,7 +38,7 @@ using Test
     end
 
     @testset "documentation has no retired callable names" begin
-        root = dirname(@DIR)
+        root = dirname(@__DIR__)
         docs_root = joinpath(root, "docs", "src")
         pages = [joinpath(docs_root, p) for p in readdir(docs_root)
                  if endswith(p, ".md") && !startswith(p, "migration")]
