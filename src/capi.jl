@@ -283,11 +283,22 @@ True if the C ABI library resolves and is ABI compatible with this binding
 (see [`abi_version`](@ref)).
 """
 function library_available()
+    return library_available(_lib())
+end
+
+"""
+    library_available(lib::AbstractString) -> Bool
+
+The explicit library is loaded and checked for ABI compatibility. This probes
+`lib` without changing the library selected by `set_library!`, `POWERIO_CAPI`,
+or Preferences.jl.
+"""
+function library_available(lib::AbstractString)
     try
-        _ensure_compatible()
+        _ensure_compatible(lib)
         return true
     catch e
-        @debug "PowerIO: library unavailable or incompatible" exception = (e, catch_backtrace())
+        @debug "PowerIO: library unavailable or incompatible" library = lib exception = (e, catch_backtrace())
         return false
     end
 end
