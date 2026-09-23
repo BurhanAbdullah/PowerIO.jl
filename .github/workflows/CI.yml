@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  actions: write
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -115,6 +119,7 @@ jobs:
     name: Documentation
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
       statuses: write
     steps:
@@ -123,6 +128,9 @@ jobs:
         with:
           version: '1'
       - uses: julia-actions/cache@a7bed9df697e5d7309d68afe7542a87621a8b6c8 # v3.3.0
+        with:
+          # PR workflows use a read-only token; avoid cleanup calls that return 403.
+          delete-old-caches: false
       # The module loads without the C library (resolution is lazy and
       # doctest=false), so the docs build needs no Rust toolchain.
       - name: Instantiate docs environment
