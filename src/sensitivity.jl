@@ -45,7 +45,7 @@ function calc_ptdf(net; reference_bus=:auto,
     ref = if reference_bus === :auto
         refs = reference_bus_ids(net)
         isempty(refs) && throw(PowerIOError("CALC.PTDF.NO_REFERENCE_BUS",
-                                            "reference_bus=:auto requires at least one REF bus"))
+                                            "reference_bus=:auto requires at least one REF bus", Diagnostic[]))
         first(refs)
     elseif reference_bus isa Integer
         Int(reference_bus)
@@ -63,7 +63,7 @@ function calc_ptdf(net; reference_bus=:auto,
 
     F = LinearAlgebra.lu(Bred; check=false)
     LinearAlgebra.issuccess(F) || throw(PowerIOError("CALC.PTDF.SINGULAR",
-                                                       "reduced DC bus susceptance matrix is singular"))
+                                                       "reduced DC bus susceptance matrix is singular", Diagnostic[]))
     matrix = Matrix(transpose(F \ Matrix(transpose(Bf[:, keep]))))
 
     return PTDFResult(matrix, bus_ids[keep], collect(axes.idx_to_branch), ref)
