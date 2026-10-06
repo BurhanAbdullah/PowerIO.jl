@@ -1,7 +1,7 @@
 name = "PowerIO"
 uuid = "05ed8b54-f668-4096-9d0d-e8c3dd9dc169"
 authors = ["Sam Talkington <samtalki@users.noreply.github.com>"]
-version = "0.11.3"
+version = "0.11.4"
 
 [deps]
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
@@ -26,7 +26,7 @@ Libdl = "1"
 Logging = "1"
 Pkg = "1"
 Preferences = "1"
-SHA = "0.7"
+SHA = "0.7, 1"
 SparseArrays = "1"
 TOML = "1"
 Test = "1"
