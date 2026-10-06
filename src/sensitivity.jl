@@ -18,7 +18,7 @@ end
               skip_zero_impedance=false) -> PTDFResult
 
 Compute the deterministic DC power transfer distribution factor (PTDF) matrix
-from the network existing DC operators.
+from the network's existing DC operators.
 
 `reference_bus=:auto` selects the first bus whose type is "REF", in table
 order. An integer selects a bus id explicitly. The returned `bus_axis` contains
@@ -31,9 +31,11 @@ The calculation uses the same branch and bus axes as
 nonsingular; a singular reduced matrix is reported as a `PowerIOError` rather
 than silently producing a pseudoinverse.
 
-The result uses the package DC sign convention, so applying a transaction
-vector `p` to `result.matrix` gives the corresponding branch-flow change in
-the same orientation as [`calc_branch_flow_dc`](@ref).
+The result uses the package DC sign convention. The PTDF matrix has one row per
+`branch_axis` entry and one column per `bus_axis` entry. A vector `p` indexed by
+`result.bus_axis` represents non-reference-bus injections, with the balancing
+withdrawal implicit at `reference_bus`; `result.matrix * p` gives the
+branch-flow change in the same orientation as [`calc_branch_flow_dc`](@ref).
 """
 function calc_ptdf(net; reference_bus=:auto,
                    formula::AbstractString="series_susceptance",
