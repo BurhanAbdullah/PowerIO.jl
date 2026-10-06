@@ -1,7 +1,7 @@
 # PTDF sensitivity
 
 PowerIO provides a deterministic DC power transfer distribution factor (PTDF)
-calculation built directly on the package existing DC operator axes.
+calculation built directly on the package's existing DC operator axes.
 
 ## Definition
 
@@ -22,7 +22,9 @@ ptdf.branch_axis
 ptdf.matrix
 ```
 
-A PTDF column can be applied to a balanced transaction directly:
+The PTDF matrix has one row per `branch_axis` entry and one column per
+`bus_axis` entry. It maps injections on `bus_axis` to branch-flow changes; the
+balancing withdrawal at `reference_bus` is implicit:
 
 ```julia
 transaction = zeros(length(ptdf.bus_axis))
