@@ -35,7 +35,7 @@ using Test
 
         singular = parse(fixture("zero_impedance.m")).value
         err = try
-            calc_ptdf(singular; reference_bus=1, skip_zero_impedance=true)
+            calc_ptdf(singular; reference_bus=2, skip_zero_impedance=true)
             nothing
         catch e
             e
