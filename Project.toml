@@ -5,7 +5,7 @@ version = "0.11.3"
 
 [deps]
 JSON3 = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
-LazyArtifacts = "4af54fe-eca0-43a8-85a7-787d91b784e3"
+LazyArtifacts = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 LinearAlgebra = "37e2e46d-fc0d-5d2d-9e8c-1b1c1b0c2d4e"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
