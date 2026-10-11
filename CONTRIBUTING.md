@@ -62,6 +62,17 @@ documentation.
 
 ## Releasing
 
+Use the [paired release procedure](https://github.com/eigenergy/powerio/blob/main/docs/src/paired-releases.md).
+It prepares both repositories for one publication approval and registers the
+exact tested Julia commit independently of later changes to `main`.
+
+Until paired automation is explicitly activated, follow the existing
+version, changelog, release-intent, and tag workflow below. Do not mix the two
+release routes. The legacy intent is not a Julia requirement and is not used
+by paired releases.
+
+### Before activation
+
 The release is approved before powerio publishes. Put the intended PowerIO
 version in `Project.toml`, write the matching top `CHANGELOG.md` section, and
 merge every Julia source, documentation, and workflow change. Leave
@@ -122,14 +133,9 @@ minutes, rerun "Register Package" with the version and that full SHA. The last
 resort is a human `@JuliaRegistrator register` comment with the top changelog
 section as its `Release notes:` block.
 
-TagBot uses `TAGBOT_TOKEN` when present, falling back to `GITHUB_TOKEN` for
-normal releases. Issue #44 is a manual `v0.0.1` backfill because the tagged
-commit changed workflow files. To resolve it, create a fine grained
-`TAGBOT_TOKEN` with contents and workflows write access, add it as a repo
-Actions secret, then run the TagBot workflow manually. If that still fails,
-run `gh release create v0.0.1 --target a6a9b00a --generate-notes` locally.
-Set `TAGBOT_SSH` to a write deploy key, or reuse `DOCUMENTER_KEY`, so TagBot
-can push release tags through SSH.
+TagBot uses `TAGBOT_TOKEN` when present, falling back to `GITHUB_TOKEN`. Set
+`TAGBOT_SSH` to a write deploy key, or reuse `DOCUMENTER_KEY`, so TagBot can
+push release tags through SSH.
 
 ## Writing
 
