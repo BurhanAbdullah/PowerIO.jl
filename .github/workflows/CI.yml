@@ -1,14 +1,12 @@
 name: CI
 on:
   push:
-    branches: [main, feat/deterministic-ptdf]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
 jobs:
   test:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -16,6 +14,7 @@ jobs:
         julia-version: ['1.10', '1']
     env:
       JULIA_NUM_THREADS: "4"
+      PAIRED_RELEASES: ${{ vars.PAIRED_RELEASES }}
       POWERIO_REQUIRE_LIBRARY: "1"
       # secrets can't be read in `if:` directly; expose it as an env var to gate on.
       POWERIO_TOKEN: ${{ secrets.POWERIO_REPO_TOKEN }}
@@ -107,27 +106,6 @@ jobs:
             echo "::error::src/LibPowerIO.jl is stale; run 'julia --project=gen gen/generate.jl' and commit the result"
             exit 1
           }
-      - name: Commit regenerated ABI wrapper (temporary repair)
-        if: always() && steps.powerio.outputs.available == 'true' && matrix.julia-version == '1' && github.event_name == 'push' && github.repository == 'BurhanAbdullah/PowerIO.jl' && github.ref_name == 'feat/deterministic-ptdf'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if git diff --quiet -- src/LibPowerIO.jl; then
-            echo "Generated wrapper is already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/LibPowerIO.jl
-          git commit -m "chore: regenerate C ABI bindings"
-          git push origin HEAD:feat/deterministic-ptdf
-      - name: Upload regenerated raw layer for inspection
-        if: always() && steps.powerio.outputs.available == 'true' && matrix.julia-version == '1'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: generated-libpowerio
-          path: src/LibPowerIO.jl
-          if-no-files-found: error
       - uses: julia-actions/julia-buildpkg@e3eb439fad4f9aba7da2667e7510e4a46ebc46e1 # v1.7.0
       - uses: julia-actions/julia-runtest@6e050c8013b833b1195105ff2fce9cd802f53271 # v1.12.0
         env:
