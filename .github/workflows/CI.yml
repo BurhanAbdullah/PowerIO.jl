@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [main, feat/deterministic-ptdf]
   pull_request:
   workflow_dispatch:
 
@@ -105,6 +105,13 @@ jobs:
             echo "::error::src/LibPowerIO.jl is stale; run 'julia --project=gen gen/generate.jl' and commit the result"
             exit 1
           }
+      - name: Upload regenerated raw layer for inspection
+        if: always() && steps.powerio.outputs.available == 'true' && matrix.julia-version == '1'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: generated-libpowerio
+          path: src/LibPowerIO.jl
+          if-no-files-found: error
       - uses: julia-actions/julia-buildpkg@e3eb439fad4f9aba7da2667e7510e4a46ebc46e1 # v1.7.0
       - uses: julia-actions/julia-runtest@6e050c8013b833b1195105ff2fce9cd802f53271 # v1.12.0
         env:
