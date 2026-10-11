@@ -38,3 +38,10 @@ topologies are reported instead of being handled with a pseudoinverse.
 
 `reference_bus=:auto` selects the first `"REF"` bus in network table order.
 For reproducible studies, an explicit bus id can be supplied.
+
+## API reference
+
+```@docs
+PTDFResult
+calc_ptdf
+```
