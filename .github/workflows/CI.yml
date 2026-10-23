@@ -28,8 +28,7 @@ jobs:
       # real. The probe checks out eigenergy/powerio anonymously when it is public;
       # while it is private, add a token with read access to it as the
       # POWERIO_REPO_TOKEN secret. With neither, the build is skipped and the ccall
-      # tests auto-skip (the pure-Julia tests still run). Drops to
-      # `using PowerIO_jll` once that is registered (issue #1).
+      # tests auto-skip (the pure-Julia tests still run).
       - name: Probe powerio access
         id: powerio
         run: |
