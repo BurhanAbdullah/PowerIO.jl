@@ -18,13 +18,16 @@ fixture(parts...) = joinpath(DATA, parts...)
 
 @testset "PowerIO" begin
     include("test_release.jl")            # Project.toml and changelog release guard
-    include("test_release_automation.jl") # reviewed intent and artifact state machine
+    include("test_release_script.jl")     # release target, changelog, and registration steps
+    include("test_update_artifacts.jl")   # release binary checks and Artifacts.toml writing
     include("test_public_api.jl")         # the exported surface
     include("test_capi_coverage.jl")      # every generated entry point is bound or exempt
     include("test_operations.jl")         # parse, emit, serialize, deserialize
     include("test_network.jl")            # BalancedNetwork element tables
     include("test_geography.jl")
     include("test_dist.jl")               # MulticonductorNetwork element tables
+    include("test_sincal.jl")            # reader selections and source acquisition
+    include("test_source_boundaries.jl") # reference-aware PF and source views
     include("test_collections.jl")        # TimeSeries, ScenarioSet, instances, solutions
     include("test_lindist3flow.jl")
     include("test_handle_operations.jl")
@@ -38,5 +41,3 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_bridges.jl")            # PowerModels and ExaModelsPower bridges
     include("test_aqua.jl")               # Aqua quality checks
 end
-
-include("test_paired_release.jl")

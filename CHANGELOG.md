@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased
+
+- Multiconductor PF/OPF construction now rejects physical islands without a voltage source
+  instead of assigning an implicit anchor. Parsing retains those islands;
+  callers must resolve de-energized islands explicitly before construction.
+- Preserve concrete `VoltageSource` inference when indexing lazy power-flow
+  source boundaries, including the older ABI 7 fallback.
+- Use the current native `main` branch for source CI by default, migrate
+  maintained build commands off the inert Arrow compatibility flag, and
+  correct the supported Julia version and SINCAL release instructions.
+
+- Read referenced voltage sources through `VoltageSource.reference_terminal`
+  and prescribed power-flow sources through `McAcPfInstance.source_boundaries`.
+  A named reference is the other voltage endpoint on the source bus, not a
+  grounding declaration. Existing earth-referenced constructors and the
+  older ABI 7 source-view fallback remain available.
+- Bind the separate `sincal-balanced` and `sincal-multiconductor` reader
+  profiles through `SincalBalancedReadOptions` and `SincalReadOptions`.
+  Select a native variant, daily snapshot, and explicitly acquired Access
+  tables. Path inputs support an explicit acquisition root; memory and IO
+  inputs accept named companion buffers and never acquire them from disk.
+  Parsing verifies the original MDB's length and hash, but does not
+  independently attest the companion table cells or run acquisition tools.
+- Keep SINCAL distribution reading strict by default.
+  `assume_inactive_source_controls=true` explicitly opts into the
+  experimental schema-11.5 NULL source-control assumption, with diagnostics
+  and durable IR provenance. Active controls and missing electrical
+  parameters still fail. Native SINCAL execution remains unverified.
+  Source echo, IR restoration, and PF preparation are supported; fresh
+  experimental SINCAL writing remains Rust-only. PowerIO prepares
+  calculation instances rather than solving them.
+
+C ABI 7 and PowerIO IR version 2 remain unchanged.
+
 ## 0.11.5
 
 - Coordinate the Julia package with PowerIO 0.11.5. The bundled library's
@@ -35,9 +69,18 @@
   their code for PSS/E output. A PowerIO IR document an earlier release wrote
   from a PSS/E case keeps the swapped mode when read with `deserialize`, so
   parse the case again.
-- Validate frozen paired release candidates against the five PowerIO binary
-  assets, then register the exact tested Julia commit. Keep the legacy release
-  intent checks active until paired automation is explicitly enabled.
+- PSS/E and RAWX two winding transformers whose winding 2 ratio is not one
+  now read with the impedance PSS/E solves with: `r` and `x` scale by the
+  square of that ratio and a winding 1 tap control range divides by it, so
+  those branches' `r`, `x`, and tap limits change. A transformer with a
+  winding 2 ratio of one reads as before. A PowerIO IR document an earlier
+  release wrote from such a case keeps the old impedance, so parse the case
+  again.
+- PSS/E RAW strings in double quotes read as one field, so a double-quoted
+  name or circuit id no longer shifts the columns after it.
+- `MonitoredSet` reads the contingency file spelling
+  `MONITOR BRANCH FROM BUS i TO BUS j [CIRCUIT c]` (also `LINE`) as a
+  one-branch statement instead of keeping it as text.
 
 C ABI 7 and PowerIO IR version 2 remain unchanged.
 
