@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.6
 
 - Multiconductor PF/OPF construction now rejects physical islands without a voltage source
   instead of assigning an implicit anchor. Parsing retains those islands;
