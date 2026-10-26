@@ -36,11 +36,21 @@ summarize(m::PioModule{<:TimeSeries}) = length(m.value)
 If the library hands back a value type this release does not bind, you get an
 [`UnknownValue`](@ref) with its structural type name.
 
-When the value type is known in advance, name it: `parse(BalancedNetwork,
-"case118.m")` returns a `PioModule{BalancedNetwork}` the compiler can see, and
-refuses a source that holds anything else with an `ArgumentError`. The untyped
-`parse` decides the type at run time, so code compiled with
-`juliac --trim=safe` must use the typed form.
+When the value type is known in advance, name it. As with `parse(Int, "12")`,
+the result is of the type you name:
+
+```julia
+net = parse(BalancedNetwork, "case118.m")            # the BalancedNetwork
+m = parse(PioModule{BalancedNetwork}, "case118.m")   # its module, for emit, updates, and records
+```
+
+Both are inferred, and a source that holds anything else is an `ArgumentError`
+naming what it holds. The untyped `parse` decides the type at run time, so code
+compiled with `juliac --trim=safe` must use a typed form. A family,
+`parse(TimeSeries, path)`, is checked at run time and returns whichever member
+the source holds; a module type names one value type, so `PioModule{V}` takes a
+concrete `V`. `deserialize` takes the same forms, and the `to_*_instance`
+constructions return a concrete `PioModule{I}`.
 
 ## Sources
 

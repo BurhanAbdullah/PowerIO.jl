@@ -41,6 +41,10 @@ function _operation_handles(roots)
     return handles
 end
 
+# One handle, the common case (every element row and property read): nothing to
+# order or deduplicate, so the tuple of roots is the list and nothing is allocated.
+_operation_handles(roots::Tuple{Handle}) = roots
+
 _collect_handles!(handles::Vector{Handle}, h::Handle) = push!(handles, h)
 _collect_handles!(handles::Vector{Handle}, hs::Vector{<:Handle}) = append!(handles, hs)
 _collect_handles!(handles::Vector{Handle}, roots::Tuple) =

@@ -597,9 +597,7 @@ const _BALANCED_SCALARS = (:name, :base_mva, :base_frequency, :geo, :detailed_co
 # propagation reaches it.
 function _table(net::BalancedNetwork, ::Val{name}) where {name}
     T, count_entry = _BALANCED_TABLES[name]
-    h = getfield(net, :handle)
-    n = @with_handles h _count(count_entry, getfield(h, :lib), _ptr(h))
-    return Elements{T,BalancedNetwork}(net, n)
+    return Elements{T,BalancedNetwork}(net, _with_network((lib, p) -> _count(count_entry, lib, p), net))
 end
 
 _base_mva(net::BalancedNetwork) = _with_network((lib, p) -> @capi(lib, :pio_balanced_network_base_mva(p)), net)
@@ -612,7 +610,7 @@ function Base.getproperty(net::BalancedNetwork, name::Symbol)
     elseif name === :name
         return @with_handles h _str(@capi lib :pio_balanced_network_name(_ptr(h)))
     elseif name === :base_mva
-        return @with_handles h @capi lib :pio_balanced_network_base_mva(_ptr(h))
+        return _base_mva(net)
     elseif name === :base_frequency
         return @with_handles h @capi lib :pio_balanced_network_base_frequency_hz(_ptr(h))
     elseif name === :geo

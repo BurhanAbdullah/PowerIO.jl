@@ -102,8 +102,8 @@ _bus_type_code(bus_type::AbstractString) =
 """
     to_powerdata(net; T=Float64, strict=true, zero_impedance=:error) -> NamedTuple
     to_powerdata(net, T; strict=true, zero_impedance=:error) -> NamedTuple
-    to_powerdata(m::PioModule{BalancedNetwork}; kwargs...) -> NamedTuple
-    to_powerdata(path; format=nothing, kwargs...) -> NamedTuple
+    to_powerdata(m::PioModule{BalancedNetwork}[, T]; kwargs...) -> NamedTuple
+    to_powerdata(path[, T]; format=nothing, kwargs...) -> NamedTuple
 
 The network in ExaPowerIO's `PowerData` layout: `version`, `baseMVA`, `bus`,
 `gen`, `branch`, `arc`, and `storage`, with the row fields ExaModelsPower reads.
@@ -133,10 +133,11 @@ impedance is a `PowerIOError` with code `BUILD.OPERATOR.ZERO_IMPEDANCE`
 [`calc_admittance_matrix`](@ref)); `zero_impedance=:open` states it as an open
 circuit instead, `c1..c4` zero and `c5..c8` carrying the charging alone.
 
-The element type may also be given positionally, `to_powerdata(net, Float32)`.
-That form infers a concrete result, which the keyword form cannot (a keyword
-carries the type as a value), so it is the one to call from code compiled with
-`juliac --trim=safe`.
+The element type may also be given positionally, `to_powerdata(net, Float32)`,
+for a network, a module, or a path. That form infers a concrete result, which
+the keyword form cannot (a keyword carries the type as a value), so it is the
+one to call from code compiled with `juliac --trim=safe`. A path is read with
+`parse(BalancedNetwork, path; format)`.
 """
 to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, kwargs...) = to_powerdata(net, T; kwargs...)
 
@@ -268,18 +269,17 @@ function to_powerdata(net::BalancedNetwork, ::Type{T}; strict::Bool=true,
 end
 
 to_powerdata(m::PioModule{BalancedNetwork}; kwargs...) = to_powerdata(m.value; kwargs...)
-function to_powerdata(path::AbstractString; format::Union{AbstractString,Nothing}=nothing, kwargs...)
-    m = parse(path; format)
-    m isa PioModule{BalancedNetwork} ||
-        throw(ArgumentError("PowerIO.to_powerdata: $path holds a $(typeof(m.value)), not a BalancedNetwork"))
-    return to_powerdata(m.value; kwargs...)
-end
+to_powerdata(m::PioModule{BalancedNetwork}, ::Type{T}; kwargs...) where {T<:Real} = to_powerdata(m.value, T; kwargs...)
+to_powerdata(path::AbstractString; format::Union{AbstractString,Nothing}=nothing, kwargs...) =
+    to_powerdata(parse(BalancedNetwork, path; format); kwargs...)
+to_powerdata(path::AbstractString, ::Type{T}; format::Union{AbstractString,Nothing}=nothing, kwargs...) where {T<:Real} =
+    to_powerdata(parse(BalancedNetwork, path; format), T; kwargs...)
 
 """
     to_ac_power_data(net; T=Float64) -> NamedTuple
     to_ac_power_data(net, T) -> NamedTuple
-    to_ac_power_data(m::PioModule{BalancedNetwork}; T=Float64) -> NamedTuple
-    to_ac_power_data(path; format=nothing, T=Float64) -> NamedTuple
+    to_ac_power_data(m::PioModule{BalancedNetwork}[, T]; T=Float64) -> NamedTuple
+    to_ac_power_data(path[, T]; format=nothing, T=Float64) -> NamedTuple
 
 The layout ExaModelsPower's `build_polar_opf`, `build_rect_opf`, and
 `build_dcopf` consume: the [`to_powerdata`](@ref) tables plus the bound and
@@ -308,12 +308,11 @@ function to_ac_power_data(net::BalancedNetwork, ::Type{T}) where {T<:Real}
 end
 
 to_ac_power_data(m::PioModule{BalancedNetwork}; kwargs...) = to_ac_power_data(m.value; kwargs...)
-function to_ac_power_data(path::AbstractString; format::Union{AbstractString,Nothing}=nothing, kwargs...)
-    m = parse(path; format)
-    m isa PioModule{BalancedNetwork} ||
-        throw(ArgumentError("PowerIO.to_ac_power_data: $path holds a $(typeof(m.value)), not a BalancedNetwork"))
-    return to_ac_power_data(m.value; kwargs...)
-end
+to_ac_power_data(m::PioModule{BalancedNetwork}, ::Type{T}) where {T<:Real} = to_ac_power_data(m.value, T)
+to_ac_power_data(path::AbstractString; format::Union{AbstractString,Nothing}=nothing, kwargs...) =
+    to_ac_power_data(parse(BalancedNetwork, path; format); kwargs...)
+to_ac_power_data(path::AbstractString, ::Type{T}; format::Union{AbstractString,Nothing}=nothing) where {T<:Real} =
+    to_ac_power_data(parse(BalancedNetwork, path; format), T)
 
 # --- LoadSeries ------------------------------------------------------------------
 
@@ -357,12 +356,12 @@ Base.show(io::IO, s::LoadSeries{T}) where {T} =
 
 # Base MVA, bus ids, and per bus in-service demand in MW.
 function _load_alignment(net::BalancedNetwork, ::Type{T}) where {T<:Real}
-    base = _finite(net.base_mva, T, "network", :base_mva)
-    bus_ids = [b.id for b in net.buses]
+    base = _finite(_base_mva(net), T, "network", :base_mva)
+    bus_ids = [b.id for b in _table(net, Val(:buses))]
     index = Dict(id => i for (i, id) in enumerate(bus_ids))
     base_pd = zeros(T, length(bus_ids))
     base_qd = zeros(T, length(bus_ids))
-    for (k, l) in enumerate(net.loads)
+    for (k, l) in enumerate(_table(net, Val(:loads)))
         l.in_service || continue
         i = index[l.bus_id]
         base_pd[i] += _finite(l.p_mw, T, "load $k", :p_mw)
@@ -392,44 +391,54 @@ end
 
 """
     LoadSeries(net::BalancedNetwork, pd_mw::AbstractMatrix, qd_mw::AbstractMatrix; T=Float64)
+    LoadSeries{T}(net::BalancedNetwork, pd_mw::AbstractMatrix, qd_mw::AbstractMatrix)
 
 Build a series from load matrices in MW, `n_buses` by `n_periods`, whose rows
-are the buses in `net`'s order.
+are the buses in `net`'s order. Every `LoadSeries` constructor takes the
+element type either as the `T` keyword or as the type parameter; only the
+parameter form, `LoadSeries{Float32}(net, ...)`, infers a concrete result.
 """
-function LoadSeries(net::BalancedNetwork, pd_mw::AbstractMatrix, qd_mw::AbstractMatrix; T::Type{<:Real}=Float64)
+function LoadSeries{T}(net::BalancedNetwork, pd_mw::AbstractMatrix, qd_mw::AbstractMatrix) where {T<:Real}
     base, bus_ids, _, _ = _load_alignment(net, T)
     _check_load_matrix(pd_mw, qd_mw, length(bus_ids))
     return LoadSeries{T}(_perunit(pd_mw, base), _perunit(qd_mw, base), bus_ids, base)
 end
+LoadSeries(net::BalancedNetwork, pd_mw::AbstractMatrix, qd_mw::AbstractMatrix; T::Type{<:Real}=Float64) =
+    LoadSeries{T}(net, pd_mw, qd_mw)
 
 """
     LoadSeries(net::BalancedNetwork, curve::AbstractVector; T=Float64)
+    LoadSeries{T}(net::BalancedNetwork, curve::AbstractVector)
 
 Build a series by scaling the base case bus loads by `curve[t]` in each period.
 Bus shunts are not scaled.
 """
-function LoadSeries(net::BalancedNetwork, curve::AbstractVector; T::Type{<:Real}=Float64)
+function LoadSeries{T}(net::BalancedNetwork, curve::AbstractVector) where {T<:Real}
     isempty(curve) && throw(ArgumentError("LoadSeries: curve must have at least one period"))
     base, bus_ids, base_pd, base_qd = _load_alignment(net, T)
     c = T[T(x) for x in curve]
     all(isfinite, c) || throw(ArgumentError("LoadSeries: curve has a non-finite multiplier"))
     return LoadSeries{T}(base_pd * transpose(c) ./ base, base_qd * transpose(c) ./ base, bus_ids, base)
 end
+LoadSeries(net::BalancedNetwork, curve::AbstractVector; T::Type{<:Real}=Float64) = LoadSeries{T}(net, curve)
 
 """
     LoadSeries(net::BalancedNetwork, pd_by_id::AbstractDict, qd_by_id::AbstractDict; T=Float64)
+    LoadSeries{T}(net::BalancedNetwork, pd_by_id::AbstractDict, qd_by_id::AbstractDict)
 
 Build a series from id keyed load tables: each dictionary maps a source bus id
 to its per period MW vector. Every bus in `net` must have an entry and all
 vectors must share one length.
 """
-function LoadSeries(net::BalancedNetwork, pd_by_id::AbstractDict, qd_by_id::AbstractDict; T::Type{<:Real}=Float64)
+function LoadSeries{T}(net::BalancedNetwork, pd_by_id::AbstractDict, qd_by_id::AbstractDict) where {T<:Real}
     base, bus_ids, _, _ = _load_alignment(net, T)
     pd = _matrix_from_id_table(pd_by_id, bus_ids, :Pd, T)
     qd = _matrix_from_id_table(qd_by_id, bus_ids, :Qd, T)
     _check_load_matrix(pd, qd, length(bus_ids))
     return LoadSeries{T}(_perunit(pd, base), _perunit(qd, base), bus_ids, base)
 end
+LoadSeries(net::BalancedNetwork, pd_by_id::AbstractDict, qd_by_id::AbstractDict; T::Type{<:Real}=Float64) =
+    LoadSeries{T}(net, pd_by_id, qd_by_id)
 
 function _matrix_from_id_table(by_id::AbstractDict, bus_ids::Vector{Int}, which::Symbol, ::Type{T}) where {T<:Real}
     isempty(bus_ids) &&
@@ -457,7 +466,7 @@ series holds per unit; [`demands_mw`](@ref) converts back.
 """
 function read_load_series(net::BalancedNetwork, pd_path::AbstractString, qd_path::AbstractString;
                           T::Type{<:Real}=Float64)
-    return LoadSeries(net, _read_load_file(pd_path), _read_load_file(qd_path); T)
+    return LoadSeries{T}(net, _read_load_file(pd_path), _read_load_file(qd_path))
 end
 
 function _read_load_file(path::AbstractString)
