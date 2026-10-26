@@ -36,6 +36,12 @@ summarize(m::PioModule{<:TimeSeries}) = length(m.value)
 If the library hands back a value type this release does not bind, you get an
 [`UnknownValue`](@ref) with its structural type name.
 
+When the value type is known in advance, name it: `parse(BalancedNetwork,
+"case118.m")` returns a `PioModule{BalancedNetwork}` the compiler can see, and
+refuses a source that holds anything else with an `ArgumentError`. The untyped
+`parse` decides the type at run time, so code compiled with
+`juliac --trim=safe` must use the typed form.
+
 ## Sources
 
 `parse` takes a path, an `IO`, or bytes. The `format` keyword is a canonical

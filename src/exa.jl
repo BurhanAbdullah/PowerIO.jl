@@ -101,6 +101,7 @@ _bus_type_code(bus_type::AbstractString) =
 
 """
     to_powerdata(net; T=Float64, strict=true, zero_impedance=:error) -> NamedTuple
+    to_powerdata(net, T; strict=true, zero_impedance=:error) -> NamedTuple
     to_powerdata(m::PioModule{BalancedNetwork}; kwargs...) -> NamedTuple
     to_powerdata(path; format=nothing, kwargs...) -> NamedTuple
 
@@ -131,25 +132,32 @@ impedance is a `PowerIOError` with code `BUILD.OPERATOR.ZERO_IMPEDANCE`
 (`zero_impedance=:error`, the convention of the DC calculations and
 [`calc_admittance_matrix`](@ref)); `zero_impedance=:open` states it as an open
 circuit instead, `c1..c4` zero and `c5..c8` carrying the charging alone.
+
+The element type may also be given positionally, `to_powerdata(net, Float32)`.
+That form infers a concrete result, which the keyword form cannot (a keyword
+carries the type as a value), so it is the one to call from code compiled with
+`juliac --trim=safe`.
 """
-function to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, strict::Bool=true,
-                      zero_impedance::Symbol=:error)
+to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, kwargs...) = to_powerdata(net, T; kwargs...)
+
+function to_powerdata(net::BalancedNetwork, ::Type{T}; strict::Bool=true,
+                      zero_impedance::Symbol=:error) where {T<:Real}
     zero_impedance in (:error, :open) ||
-        throw(ArgumentError("PowerIO.to_powerdata: zero_impedance must be :error or :open, got $(repr(zero_impedance))"))
-    base = _finite(net.base_mva, T, "network", :base_mva)
-    buses = collect(net.buses)
+        throw(ArgumentError("PowerIO.to_powerdata: zero_impedance must be :error or :open, got :" * String(zero_impedance)))
+    base = _finite(_base_mva(net), T, "network", :base_mva)
+    buses = collect(_table(net, Val(:buses)))
     bus_ids = [b.id for b in buses]
     index = Dict(id => i for (i, id) in enumerate(bus_ids))
     n = length(buses)
 
     pd = zeros(T, n); qd = zeros(T, n); gs = zeros(T, n); bs = zeros(T, n)
-    for (k, l) in enumerate(net.loads)
+    for (k, l) in enumerate(_table(net, Val(:loads)))
         l.in_service || continue
         i = index[l.bus_id]
         pd[i] += _finite(l.p_mw, T, "load $k", :p_mw) / base
         qd[i] += _finite(l.q_mvar, T, "load $k", :q_mvar) / base
     end
-    for (k, s) in enumerate(net.shunts)
+    for (k, s) in enumerate(_table(net, Val(:shunts)))
         s.in_service || continue
         i = index[s.bus_id]
         gs[i] += _finite(s.conductance_mw, T, "shunt $k", :conductance_mw) / base
@@ -164,7 +172,7 @@ function to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, strict::Boo
            vmax = _field(b.vmax_pu, T, label, :vmax, checked), vmin = _field(b.vmin_pu, T, label, :vmin, checked))
     end for (i, b) in enumerate(buses)]
 
-    gens = collect(net.generators)
+    gens = collect(_table(net, Val(:generators)))
     gen_rows = [let label = "generator $i", checked = strict && g.in_service,
                     (model_poly, startup, shutdown, ncost, c, model) = _cost_tuple(g, T, base; validate=checked)
         (; i, bus = index[g.bus_id],
@@ -205,7 +213,7 @@ function to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, strict::Boo
         bus_rows[biggest_bus] = merge(bus_rows[biggest_bus], (; type = 3))
     end
 
-    branches = collect(net.branches)
+    branches = collect(_table(net, Val(:branches)))
     m = length(branches)
     branch_rows = [let label = "branch $i", checked = strict && br.in_service
         f = index[br.from_bus_id]
@@ -253,7 +261,7 @@ function to_powerdata(net::BalancedNetwork; T::Type{<:Real}=Float64, strict::Boo
            p_loss = _field(st.active_power_loss_mw, T, label, :active_power_loss_mw, checked),
            q_loss = _field(st.reactive_power_loss_mvar, T, label, :reactive_power_loss_mvar, checked),
            status = Int(st.in_service))
-    end for (i, st) in enumerate(net.storage)]
+    end for (i, st) in enumerate(_table(net, Val(:storage)))]
 
     return (; version = "2", baseMVA = base, bus = bus_rows, gen = gen_rows, branch = branch_rows,
             arc = arc_rows, storage = storage_rows)
@@ -269,6 +277,7 @@ end
 
 """
     to_ac_power_data(net; T=Float64) -> NamedTuple
+    to_ac_power_data(net, T) -> NamedTuple
     to_ac_power_data(m::PioModule{BalancedNetwork}; T=Float64) -> NamedTuple
     to_ac_power_data(path; format=nothing, T=Float64) -> NamedTuple
 
@@ -278,8 +287,10 @@ initial value vectors they read (`ref_buses`, `vmax`, `vmin`, `pmax`, `pmin`,
 `qmax`, `qmin`, `angmax`, `angmin`, `rate_a`, `vm0`, `va0`, `pg0`, `qg0`, and
 the storage ratings).
 """
-function to_ac_power_data(net::BalancedNetwork; T::Type{<:Real}=Float64)
-    pd = to_powerdata(net; T)
+to_ac_power_data(net::BalancedNetwork; T::Type{<:Real}=Float64) = to_ac_power_data(net, T)
+
+function to_ac_power_data(net::BalancedNetwork, ::Type{T}) where {T<:Real}
+    pd = to_powerdata(net, T)
     return (;
         baseMVA = [pd.baseMVA], bus = pd.bus, gen = pd.gen, arc = pd.arc, branch = pd.branch,
         storage = pd.storage,

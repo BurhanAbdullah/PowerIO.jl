@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- `parse(V, source)` parses a path, `IO`, or bytes as a known value type, as
+  in `parse(BalancedNetwork, "case14.m")` or `parse(AcScucInstance, path)`, and
+  returns a concrete `PioModule{V}`. A source that holds another kind of value
+  is an `ArgumentError` naming what it holds. The untyped `parse` chooses the
+  value type at run time, so only the typed form is inferable.
+- `to_powerdata(net, T)` and `to_ac_power_data(net, T)` take the element type
+  positionally and infer a concrete result, empty tables included. The keyword
+  forms are unchanged and forward to them.
+- The typed parse and the positional bridge compile with `juliac --trim=safe`:
+  handle locking no longer reads fields through the abstract `Handle` type, and
+  the bridge reads element tables through a statically typed accessor. CI
+  builds and runs a trimmed app (`test/trim`) on every change.
+
 ## 0.11.6
 
 - Multiconductor PF/OPF construction now rejects physical islands without a voltage source

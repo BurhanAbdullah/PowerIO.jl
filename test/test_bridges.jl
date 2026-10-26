@@ -56,6 +56,13 @@ end
         end
 
         @testset "ExaModelsPower" begin
+            # The element type given positionally infers a concrete result,
+            # empty tables included; the keyword form builds the same values.
+            @test (@inferred to_powerdata(net, Float32)).storage isa Vector{<:NamedTuple}
+            @test isconcretetype(eltype(to_powerdata(net, Float64).storage))
+            @test all(isbitstype ∘ eltype, (to_powerdata(net, Float64)[k] for k in (:bus, :gen, :branch, :arc, :storage)))
+            @test to_powerdata(net, Float32) == to_powerdata(net; T=Float32)
+            @test (@inferred to_ac_power_data(net, Float64)) == to_ac_power_data(net)
             pd = to_powerdata(net)
             @test pd.version == "2"
             @test pd.baseMVA == 100.0

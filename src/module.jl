@@ -146,6 +146,23 @@ function _wrap_module(lib::AbstractString, ptr::Ptr)
     return PioModule(handle, _module_value(lib, handle))
 end
 
+# Wrap a module pointer whose value the caller expects to be a `V`. The type is
+# a static parameter here, so the wrapped module is a concrete `PioModule{V}`
+# and nothing is chosen at run time: the form `juliac --trim=safe` can compile.
+function _wrap_module(::Type{V}, lib::AbstractString, ptr::Ptr) where {V}
+    handle = ModuleHandle(ptr, lib)
+    vptr = @with_handles handle @capi lib :pio_module_value(_ptr(handle))
+    value = ValueHandle(vptr, lib)
+    name = @with_handles value _str(@capi lib :pio_value_type_name(_ptr(value)))
+    expected = _type_name(V)
+    name == expected ||
+        throw(ArgumentError("PowerIO.parse: the source holds a " * name * ", not a " * expected))
+    wrapped = _wrap_as(V, lib, value, handle)
+    release!(value)
+    return PioModule{V}(handle, wrapped)
+end
+_wrap_module(::Type{Any}, lib::AbstractString, ptr::Ptr) = _wrap_module(lib, ptr)
+
 function _module_value(lib::AbstractString, handle::ModuleHandle)
     vptr = @with_handles handle @capi lib :pio_module_value(_ptr(handle))
     return _wrap_value(lib, ValueHandle(vptr, lib), handle)
@@ -207,10 +224,10 @@ end
 
 _optional_input_view(s) = s === nothing ? PioStringView(C_NULL, 0) : PioStringView(pointer(s), sizeof(s))
 
-function _parse_source(lib::AbstractString, source::SourceHandle, format;
+function _parse_source(::Type{V}, lib::AbstractString, source::SourceHandle, format;
                        sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
                        sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
-                       acquisition_root::Union{AbstractString,Nothing}=nothing)
+                       acquisition_root::Union{AbstractString,Nothing}=nothing) where {V}
     fmt = format === nothing ? "" : String(format)
     try
         ptr = if sincal_multiconductor === nothing && sincal_balanced === nothing && acquisition_root === nothing
@@ -241,11 +258,16 @@ function _parse_source(lib::AbstractString, source::SourceHandle, format;
                 end
             end
         end
-        return _wrap_module(lib, ptr)
+        return _wrap_module(V, lib, ptr)
     finally
         release!(source)
     end
 end
+
+# The value types a module can be parsed as by name: `parse(BalancedNetwork, path)`.
+const _ParsedValue = Union{BalancedNetwork,MulticonductorNetwork,ContingencySet,SubsystemSet,
+                           MonitoredSet,GeoLayer,CalculationInstance,CalculationSolution,
+                           TimeSeries,ScenarioSet,OperatingPoint}
 
 """
     parse(path::AbstractString; format=nothing) -> PioModule
@@ -274,38 +296,53 @@ companions from disk. C/Julia options do not change the returned network family.
 
 These methods extend `Base.parse` so the bare name works after `using PowerIO`.
 Parse failures throw [`PowerIOError`](@ref).
+
+    parse(V, source; kwargs...) -> PioModule{V}
+
+The same, for a source whose value type the caller knows, as in
+`parse(BalancedNetwork, "case14.m")` or `parse(AcScucInstance, path)`. The
+result is a concrete `PioModule{V}`, inferable where the untyped form is not, so
+it is the form to call from code compiled with `juliac --trim=safe`. A source
+that holds another kind of value is an `ArgumentError` naming what it holds.
 """
-function Base.parse(path::AbstractString; format::Union{AbstractString,Nothing}=nothing,
-                    sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
-                    sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
-                    acquisition_root::Union{AbstractString,Nothing}=nothing,
-                    named_buffers::Union{AbstractDict,Nothing}=nothing)
+Base.parse(path::AbstractString; kwargs...) = _parse(Any, path; kwargs...)
+Base.parse(io::IO; kwargs...) = _parse(Any, io; kwargs...)
+Base.parse(bytes::AbstractVector{UInt8}; kwargs...) = _parse(Any, bytes; kwargs...)
+Base.parse(::Type{V}, path::AbstractString; kwargs...) where {V<:_ParsedValue} = _parse(V, path; kwargs...)
+Base.parse(::Type{V}, io::IO; kwargs...) where {V<:_ParsedValue} = _parse(V, io; kwargs...)
+Base.parse(::Type{V}, bytes::AbstractVector{UInt8}; kwargs...) where {V<:_ParsedValue} = _parse(V, bytes; kwargs...)
+
+function _parse(::Type{V}, path::AbstractString; format::Union{AbstractString,Nothing}=nothing,
+                sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
+                sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
+                acquisition_root::Union{AbstractString,Nothing}=nothing,
+                named_buffers::Union{AbstractDict,Nothing}=nothing) where {V}
     named_buffers === nothing || throw(ArgumentError("named_buffers applies only to memory/IO sources"))
     lib = _checked_lib()
-    return _parse_source(lib, _source_open(lib, path), format; sincal_multiconductor, sincal_balanced, acquisition_root)
+    return _parse_source(V, lib, _source_open(lib, path), format; sincal_multiconductor, sincal_balanced, acquisition_root)
 end
 
-function Base.parse(io::IO; format::Union{AbstractString,Nothing}=nothing,
-                    name::Union{AbstractString,Nothing}=nothing,
-                    sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
-                    sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
-                    named_buffers::Union{AbstractDict,Nothing}=nothing,
-                    acquisition_root::Union{AbstractString,Nothing}=nothing)
+function _parse(::Type{V}, io::IO; format::Union{AbstractString,Nothing}=nothing,
+                name::Union{AbstractString,Nothing}=nothing,
+                sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
+                sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
+                named_buffers::Union{AbstractDict,Nothing}=nothing,
+                acquisition_root::Union{AbstractString,Nothing}=nothing) where {V}
     acquisition_root === nothing || throw(ArgumentError("acquisition_root applies only to path sources"))
     lib = _checked_lib()
     source_name = name === nothing ? _stream_name(io) : String(name)
-    return _parse_source(lib, _source_from_memory(lib, source_name, read(io); named_buffers), format; sincal_multiconductor, sincal_balanced)
+    return _parse_source(V, lib, _source_from_memory(lib, source_name, read(io); named_buffers), format; sincal_multiconductor, sincal_balanced)
 end
 
-function Base.parse(bytes::AbstractVector{UInt8}; format::Union{AbstractString,Nothing}=nothing,
-                    name::AbstractString="<memory>",
-                    sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
-                    sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
-                    named_buffers::Union{AbstractDict,Nothing}=nothing,
-                    acquisition_root::Union{AbstractString,Nothing}=nothing)
+function _parse(::Type{V}, bytes::AbstractVector{UInt8}; format::Union{AbstractString,Nothing}=nothing,
+                name::AbstractString="<memory>",
+                sincal_multiconductor::Union{SincalReadOptions,Nothing}=nothing,
+                sincal_balanced::Union{SincalBalancedReadOptions,Nothing}=nothing,
+                named_buffers::Union{AbstractDict,Nothing}=nothing,
+                acquisition_root::Union{AbstractString,Nothing}=nothing) where {V}
     acquisition_root === nothing || throw(ArgumentError("acquisition_root applies only to path sources"))
     lib = _checked_lib()
-    return _parse_source(lib, _source_from_memory(lib, name, bytes; named_buffers), format; sincal_multiconductor, sincal_balanced)
+    return _parse_source(V, lib, _source_from_memory(lib, name, bytes; named_buffers), format; sincal_multiconductor, sincal_balanced)
 end
 
 """

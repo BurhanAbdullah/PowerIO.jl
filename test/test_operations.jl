@@ -21,6 +21,27 @@
             @test occursin("PioModule{BalancedNetwork}", sprint(show, m))
         end
 
+        @testset "parse a path as a named value type" begin
+            m = @inferred parse(BalancedNetwork, fixture("case9.m"))
+            @test m isa PioModule{BalancedNetwork}
+            @test m.type_name == "powerio.BalancedNetwork"
+            @test length(m.value.buses) == 9
+            @test parse(BalancedNetwork, fixture("case9.m"); format="matpower").value isa BalancedNetwork
+            @test parse(BalancedNetwork, read(fixture("case9.m")); name="case9.m") isa PioModule{BalancedNetwork}
+            @test open(io -> parse(BalancedNetwork, io), fixture("case9.m")) isa PioModule{BalancedNetwork}
+            @test parse(AcScucInstance, fixture("goc3", "goc3_small.json")) isa PioModule{AcScucInstance}
+            @test parse(MulticonductorNetwork, fixture("dist", "switch.dss")) isa PioModule{MulticonductorNetwork}
+            # A source holding another kind of value names what it holds.
+            err = try
+                parse(MulticonductorNetwork, fixture("case9.m"))
+            catch e
+                e
+            end
+            @test err isa ArgumentError
+            @test occursin("powerio.BalancedNetwork", err.msg)
+            @test occursin("powerio.MulticonductorNetwork", err.msg)
+        end
+
         @testset "a module names its value's structural type" begin
             m = parse(fixture("case9.m"))
             @test m.type_name == "powerio.BalancedNetwork"
