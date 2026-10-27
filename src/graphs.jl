@@ -72,18 +72,27 @@ function network_islands(net::BalancedNetwork;
     # MATPOWER type 4 buses are explicitly isolated, not ordinary singleton
     # AC islands. Keep them out of the component partition, matching the
     # native network-island semantics.
-    bus_ids = [bus.id for bus in buses if bus.bus_type != "ISOLATED"]
+    isolated_bus_ids = Set(bus.id for bus in buses if bus.bus_type == "ISOLATED")
+    bus_ids = [bus.id for bus in buses if !(bus.id in isolated_bus_ids)]
     edges = Tuple{Int,Int}[]
+    function add_ac_edge!(from_id, to_id)
+        # A type-4 bus stays isolated even if a source branch or transformer
+        # row still names it. Unknown non-isolated IDs are checked below.
+        if !(from_id in isolated_bus_ids || to_id in isolated_bus_ids)
+            push!(edges, (from_id, to_id))
+        end
+        return nothing
+    end
 
     for branch in net.branches
         branch.in_service || continue
-        push!(edges, (branch.from_bus_id, branch.to_bus_id))
+        add_ac_edge!(branch.from_bus_id, branch.to_bus_id)
     end
 
     if include_switches
         for switch in net.switches
             switch.closed || continue
-            push!(edges, (switch.from_bus_id, switch.to_bus_id))
+            add_ac_edge!(switch.from_bus_id, switch.to_bus_id)
         end
     end
 
@@ -94,7 +103,7 @@ function network_islands(net::BalancedNetwork;
             length(windings) < 2 && continue
             first_bus = windings[1].bus_id
             for winding in windings[2:end]
-                push!(edges, (first_bus, winding.bus_id))
+                add_ac_edge!(first_bus, winding.bus_id)
             end
         end
     end
