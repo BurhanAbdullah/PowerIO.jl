@@ -135,15 +135,12 @@
             @test t.star_voltage_magnitude_pu == 0.98
             @test t.star_voltage_angle_degrees == -1.5
             @test t.in_service
-            # Three-winding transformers use a star projection rooted at the
-            # first winding, with each projected edge retaining the table row.
+            # Balanced graph projections contain branch edges only. Three-winding
+            # transformer metadata remains available on the network table; this
+            # projection must not invent transformer edges for the balanced API.
             graph = to_graph(raw)
-            transformer_edges = filter(edge -> edge.kind == "transformer", graph.edges)
-            @test transformer_edges == [
-                (kind = "transformer", index = 1, from = 1, to = 2),
-                (kind = "transformer", index = 1, from = 1, to = 3),
-            ]
-            @test length(graph.buses) == 3
+            @test length(graph.buses) == length(raw.buses)
+            @test all(edge -> edge.kind == "branch", graph.edges)
             @test length(raw.areas) == 1
             @test raw.areas[1].number == 1
             @test raw.areas[1].area_type == "ControlArea"
