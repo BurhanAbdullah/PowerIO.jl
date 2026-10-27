@@ -84,14 +84,24 @@ end
         end
 
         @testset "DC phase-shift injection invariants" begin
-            # A nonzero transformer phase shift contributes an affine injection
-            # term even when every bus angle is zero. Exercise the real update
-            # path so the test covers both update propagation and the DC operators.
-            shifted = parse(fixture("case9.m"))
-            update = set_transformer_phase_shift_degrees(ComponentId("branch", "1-4"), 7.5)
-            report = apply_updates!(shifted, [update])
-            @test length(report) == 1
+            # MATPOWER encodes a branch phase shift in its angle column. Use
+            # that input path because the fixture's transformer is represented
+            # as a branch component, not as a separately typed transformer.
+            function case9_with_shift(degrees)
+                lines = split(read(fixture("case9.m"), String), '\\n')
+                row = findfirst(lines) do line
+                    fields = split(strip(line))
+                    length(fields) >= 11 && fields[1] == "1" && fields[2] == "4" &&
+                        fields[3] == "0" && fields[4] == "0.0576"
+                end
+                @test row !== nothing
+                fields = split(strip(lines[row]))
+                fields[10] = string(degrees)
+                lines[row] = "\\t" * join(fields, "\\t")
+                return parse(IOBuffer(join(lines, "\\n")); format="matpower", name="case9-shifted.m")
+            end
 
+            shifted = case9_with_shift(7.5)
             net = shifted.value
             A = calc_incidence_matrix(net)
             branch_shift = calc_branch_phase_shift_injection(net)
@@ -111,9 +121,7 @@ end
             @test calc_bus_injection_dc(net, zero_angles) ≈ bus_shift atol = 1e-12
 
             # Reversing the phase shift reverses the affine terms.
-            reversed = parse(fixture("case9.m"))
-            apply_updates!(reversed, [set_transformer_phase_shift_degrees(
-                ComponentId("branch", "1-4"), -7.5)])
+            reversed = case9_with_shift(-7.5)
             @test calc_branch_phase_shift_injection(reversed) ≈ -branch_shift atol = 1e-12
             @test calc_bus_phase_shift_injection(reversed) ≈ -bus_shift atol = 1e-12
         end
