@@ -85,8 +85,9 @@ per generator `pg`, `pmax`, and per bus demand and shunt sums.
 
 `network_islands(net)` returns the connected AC components as vectors of
 source bus IDs. It is useful for spotting disconnected parts of a case before
-running a power-flow or optimization workflow. Every bus is retained, including
-buses that form a one-bus island.
+running a power-flow or optimization workflow. Buses that are not typed `"ISOLATED"` are retained, including buses that
+form a one-bus island. Buses explicitly typed `"ISOLATED"` are excluded from
+the AC island partition, matching the native network-island semantics.
 
 The default topology includes in-service branches, closed switches, and
 in-service three-winding transformers. Set `include_switches=false` or
