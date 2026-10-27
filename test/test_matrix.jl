@@ -88,7 +88,7 @@ end
             # that input path because the fixture's transformer is represented
             # as a branch component, not as a separately typed transformer.
             function case9_with_shift(degrees)
-                lines = split(read(fixture("case9.m"), String), '\\n')
+                lines = split(read(fixture("case9.m"), String), '\n')
                 row = findfirst(lines) do line
                     fields = split(strip(line))
                     length(fields) >= 11 && fields[1] == "1" && fields[2] == "4" &&
@@ -97,8 +97,8 @@ end
                 @test row !== nothing
                 fields = split(strip(lines[row]))
                 fields[10] = string(degrees)
-                lines[row] = "\\t" * join(fields, "\\t")
-                return parse(IOBuffer(join(lines, "\\n")); format="matpower", name="case9-shifted.m")
+                lines[row] = "\t" * join(fields, "\t")
+                return parse(IOBuffer(join(lines, "\n")); format="matpower", name="case9-shifted.m")
             end
 
             shifted = case9_with_shift(7.5)
