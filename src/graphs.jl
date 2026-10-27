@@ -65,7 +65,14 @@ function network_islands(net::BalancedNetwork;
                          include_switches::Bool=true,
                          include_transformers_3w::Bool=true)
     buses = collect(net.buses)
-    bus_ids = [bus.id for bus in buses]
+    all_bus_ids = [bus.id for bus in buses]
+    length(unique(all_bus_ids)) == length(all_bus_ids) ||
+        throw(ArgumentError("network_islands requires unique source bus IDs"))
+
+    # MATPOWER type 4 buses are explicitly isolated, not ordinary singleton
+    # AC islands. Keep them out of the component partition, matching the
+    # native network-island semantics.
+    bus_ids = [bus.id for bus in buses if bus.bus_type != "ISOLATED"]
     edges = Tuple{Int,Int}[]
 
     for branch in net.branches
