@@ -2,7 +2,8 @@
 # and the coordinate lists the powerio matrix crate wrote for case9 and case30.
 
 @testset "Ybus numerical guards" begin
-    branch = (resistance_pu=0.0, reactance_pu=0.1,
+    branch = (from_bus_id=1, to_bus_id=2,
+              resistance_pu=0.0, reactance_pu=0.1,
               from_conductance_pu=0.0, from_susceptance_pu=0.0,
               to_conductance_pu=0.0, to_susceptance_pu=0.0,
               effective_tap_ratio=1.0e308, phase_shift_degrees=0.0)
