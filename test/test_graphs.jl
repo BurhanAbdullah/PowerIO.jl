@@ -23,6 +23,13 @@
             @test all(isempty(island) == false for island in network_islands(m.value))
         end
 
+        @testset "isolated bus is excluded from AC islands" begin
+            net = parse(fixture("islands.m")).value
+            islands = network_islands(net)
+            @test islands == [[1, 2, 3], [4, 5]]
+            @test all(!(6 in island) for island in islands)
+        end
+
         @testset "in-service three-winding transformers connect winding buses" begin
             net = parse(fixture("psse", "case3_3w_v33.raw")).value
             islands = network_islands(net)
