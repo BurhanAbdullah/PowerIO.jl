@@ -83,6 +83,41 @@ end
             @test all(1 .<= raw_axes.idx_to_branch)
         end
 
+        @testset "DC phase-shift injection invariants" begin
+            # A nonzero transformer phase shift contributes an affine injection
+            # term even when every bus angle is zero. Exercise the real update
+            # path so the test covers both update propagation and the DC operators.
+            shifted = parse(fixture("case9.m"))
+            update = set_transformer_phase_shift_degrees(ComponentId("branch", "1-4"), 7.5)
+            report = apply_updates!(shifted, [update])
+            @test length(report) == 1
+
+            net = shifted.value
+            A = calc_incidence_matrix(net)
+            branch_shift = calc_branch_phase_shift_injection(net)
+            bus_shift = calc_bus_phase_shift_injection(net)
+            zero_angles = zeros(length(net.buses))
+
+            @test any(x -> !iszero(x), branch_shift)
+            @test any(x -> !iszero(x), bus_shift)
+            # Branch-to-bus aggregation must preserve the injection sign convention.
+            @test bus_shift ≈ transpose(A) * branch_shift atol = 1e-12
+            # Phase-shift injections are internal transfers: they cannot create
+            # net active power across the network boundary.
+            @test sum(bus_shift) ≈ 0.0 atol = 1e-12
+            # At zero angles, the affine phase-shift terms are the complete DC
+            # branch-flow and bus-injection results.
+            @test calc_branch_flow_dc(net, zero_angles) ≈ branch_shift atol = 1e-12
+            @test calc_bus_injection_dc(net, zero_angles) ≈ bus_shift atol = 1e-12
+
+            # Reversing the phase shift reverses the affine terms.
+            reversed = parse(fixture("case9.m"))
+            apply_updates!(reversed, [set_transformer_phase_shift_degrees(
+                ComponentId("branch", "1-4"), -7.5)])
+            @test calc_branch_phase_shift_injection(reversed) ≈ -branch_shift atol = 1e-12
+            @test calc_bus_phase_shift_injection(reversed) ≈ -bus_shift atol = 1e-12
+        end
+
         @testset "zero impedance branches" begin
             tie = parse(fixture("zero_impedance.m")).value
             err = try
