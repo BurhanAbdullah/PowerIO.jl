@@ -131,3 +131,42 @@ pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by 
 pio_mc_ac_pf_instance_load_details_at	multiconductor AC load detail rows are C-only pending a typed Julia load-detail API
 pio_mc_ac_pf_instance_load_terminal_name_at	multiconductor AC load terminal names are C-only pending a typed Julia load-detail API
 pio_multiconductor_network_load_details_at	multiconductor network load detail rows are C-only pending a typed Julia load-detail API
+
+# AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types.
+pio_ac_ots_instance_branch_at	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_instance_create	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_instance_fix_topology	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_instance_options	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_instance_validate_topology	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_solution_branch_closed_at	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_solution_create	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_solution_materialize	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_ac_ots_solution_summary	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_module_to_ac_ots_instance	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_module_to_ac_ots_instance_with_options	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_value_ac_ots_instance	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+pio_value_ac_ots_solution	AC optimal transmission switching instance and solution tables are C-only pending typed Julia OTS result types
+
+# Island partition accessors are C-only pending typed Julia island result types.
+pio_balanced_network_islands	island partition views are C-only pending typed Julia island result types
+pio_islands_at	island partition views are C-only pending typed Julia island result types
+pio_islands_count	island partition views are C-only pending typed Julia island result types
+pio_islands_isolated_bus_ids	island partition views are C-only pending typed Julia island result types
+pio_islands_isolated_bus_indices	island partition views are C-only pending typed Julia island result types
+pio_islands_release	island partition views are C-only pending typed Julia island result types
+pio_islands_retain	island partition views are C-only pending typed Julia island result types
+
+# Sensitivity result accessors are C-only pending typed Julia sensitivity result types.
+pio_calc_sensitivities	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_branch_identity	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_branch_rows	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_bus_ids	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_lodf	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_n_branches	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_n_buses	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_ptdf	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_reduced_dimension	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_reference_bus_indices	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_release	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_retain	sensitivity result accessors are C-only pending typed Julia sensitivity result types
+pio_sensitivities_solver_path	sensitivity result accessors are C-only pending typed Julia sensitivity result types
