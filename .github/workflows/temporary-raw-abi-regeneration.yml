@@ -5,7 +5,7 @@ on:
       - fix/reference-slack-semantics
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -24,10 +24,14 @@ jobs:
         run: |
           julia --project=gen -e 'using Pkg; Pkg.instantiate()'
           julia --project=gen gen/generate.jl powerio/powerio-capi/include/powerio.h
-      - name: Upload generated file
-        uses: actions/upload-artifact@v4
-        with:
-          name: generated-libpowerio
-          path: src/LibPowerIO.jl
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit regenerated raw ABI layer
+        run: |
+          if git diff --quiet -- src/LibPowerIO.jl; then
+            echo "Generated raw ABI layer is already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/LibPowerIO.jl
+          git commit -m "chore: regenerate raw C ABI bindings"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
