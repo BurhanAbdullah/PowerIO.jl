@@ -134,3 +134,36 @@ pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by 
 pio_mc_ac_pf_instance_load_details_at	multiconductor AC load detail rows are C-only pending a typed Julia load-detail API
 pio_mc_ac_pf_instance_load_terminal_name_at	multiconductor AC load terminal names are C-only pending a typed Julia load-detail API
 pio_multiconductor_network_load_details_at	multiconductor network load detail rows are C-only pending a typed Julia load-detail API
+
+# ABI 7 families currently exposed by powerio but not yet wrapped by Julia.
+# Keep these explicit until the binding has typed wrappers and tests for the returned handles.
+pio_ac_ots_instance_branch_at	AC optimal transmission switching instance views remain C-only pending a typed Julia result API
+pio_ac_ots_instance_create	AC optimal transmission switching instance lifecycle remains C-only pending a typed Julia result API
+pio_ac_ots_instance_fix_topology	AC optimal transmission switching topology fixing remains C-only pending a typed Julia result API
+pio_ac_ots_instance_options	AC optimal transmission switching option views remain C-only pending a typed Julia result API
+pio_ac_ots_instance_validate_topology	AC optimal transmission switching topology validation remains C-only pending a typed Julia result API
+pio_ac_ots_solution_branch_closed_at	AC optimal transmission switching solution views remain C-only pending a typed Julia result API
+pio_ac_ots_solution_create	AC optimal transmission switching solution lifecycle remains C-only pending a typed Julia result API
+pio_ac_ots_solution_materialize	AC optimal transmission switching solution materialization remains C-only pending a typed Julia result API
+pio_ac_ots_solution_summary	AC optimal transmission switching solution summary remains C-only pending a typed Julia result API
+pio_balanced_network_islands	Balanced-network island partition handles await a dedicated Julia wrapper
+pio_calc_sensitivities	Sensitivity calculation handles await a dedicated Julia wrapper
+pio_islands_at	Island partition row accessors await a typed Julia island view
+pio_islands_count	Island partition row accessors await a typed Julia island view
+pio_islands_isolated_bus_ids	Island partition row accessors await a typed Julia island view
+pio_islands_isolated_bus_indices	Island partition row accessors await a typed Julia island view
+pio_islands_release	Island partition lifecycle awaits a dedicated Julia wrapper
+pio_module_to_ac_ots_instance	AC optimal transmission switching conversion awaits a typed Julia instance wrapper
+pio_module_to_ac_ots_instance_with_options	AC optimal transmission switching conversion awaits a typed Julia instance wrapper
+pio_sensitivities_branch_identity	Sensitivity result rows await a typed Julia sensitivity view
+pio_sensitivities_branch_rows	Sensitivity result rows await a typed Julia sensitivity view
+pio_sensitivities_bus_ids	Sensitivity result axes await a typed Julia sensitivity view
+pio_sensitivities_lodf	Sensitivity result matrices await a typed Julia sensitivity view
+pio_sensitivities_n_branches	Sensitivity result dimensions await a typed Julia sensitivity view
+pio_sensitivities_n_buses	Sensitivity result dimensions await a typed Julia sensitivity view
+pio_sensitivities_ptdf	Sensitivity result matrices await a typed Julia sensitivity view
+pio_sensitivities_reference_bus_indices	Sensitivity result axes await a typed Julia sensitivity view
+pio_sensitivities_release	Sensitivity result lifecycle awaits a dedicated Julia wrapper
+pio_sensitivities_solver_path	Sensitivity solver metadata awaits a typed Julia sensitivity view
+pio_value_ac_ots_instance	AC optimal transmission switching value access awaits typed Julia value dispatch
+pio_value_ac_ots_solution	AC optimal transmission switching value access awaits typed Julia value dispatch
