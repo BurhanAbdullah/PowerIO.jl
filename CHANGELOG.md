@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.11.7
 
 - Distribution load records expose the complete bounded voltage laws, including
   voltage bands, dropout thresholds and current limits. Ordinary load reads
