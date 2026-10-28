@@ -102,28 +102,28 @@ end
             end
 
             shifted = case9_with_shift(7.5)
-            net = shifted.value
-            A = calc_incidence_matrix(net)
-            branch_shift = calc_branch_phase_shift_injection(net)
-            bus_shift = calc_bus_phase_shift_injection(net)
-            zero_angles = zeros(length(net.buses))
+            shifted_net = shifted.value
+            shift_incidence = calc_incidence_matrix(shifted_net)
+            shift_branch = calc_branch_phase_shift_injection(shifted_net)
+            shift_bus = calc_bus_phase_shift_injection(shifted_net)
+            shift_zero_angles = zeros(length(shifted_net.buses))
 
-            @test any(x -> !iszero(x), branch_shift)
-            @test any(x -> !iszero(x), bus_shift)
+            @test any(x -> !iszero(x), shift_branch)
+            @test any(x -> !iszero(x), shift_bus)
             # Branch-to-bus aggregation must preserve the injection sign convention.
-            @test bus_shift ≈ transpose(A) * branch_shift atol = 1e-12
+            @test bus_shift ≈ transpose(shift_incidence) * branch_shift atol = 1e-12
             # Phase-shift injections are internal transfers: they cannot create
             # net active power across the network boundary.
             @test sum(bus_shift) ≈ 0.0 atol = 1e-12
             # At zero angles, the affine phase-shift terms are the complete DC
             # branch-flow and bus-injection results.
-            @test calc_branch_flow_dc(net, zero_angles) ≈ branch_shift atol = 1e-12
-            @test calc_bus_injection_dc(net, zero_angles) ≈ bus_shift atol = 1e-12
+            @test calc_branch_flow_dc(shifted_net, shift_zero_angles) ≈ branch_shift atol = 1e-12
+            @test calc_bus_injection_dc(shifted_net, shift_zero_angles) ≈ bus_shift atol = 1e-12
 
             # Reversing the phase shift reverses the affine terms.
             reversed = case9_with_shift(-7.5)
-            @test calc_branch_phase_shift_injection(reversed) ≈ -branch_shift atol = 1e-12
-            @test calc_bus_phase_shift_injection(reversed) ≈ -bus_shift atol = 1e-12
+            @test calc_branch_phase_shift_injection(reversed.value) ≈ -branch_shift atol = 1e-12
+            @test calc_bus_phase_shift_injection(reversed.value) ≈ -bus_shift atol = 1e-12
         end
 
         @testset "zero impedance branches" begin
