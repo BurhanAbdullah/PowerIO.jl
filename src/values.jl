@@ -73,6 +73,7 @@ for (name, doc) in (
         (:DcPfInstance, "DC power flow instance over a `BalancedNetwork`."),
         (:AcPfInstance, "AC power flow instance over a `BalancedNetwork`."),
         (:DcOpfInstance, "DC optimal power flow instance over a `BalancedNetwork`."),
+        (:AcOtsInstance, "AC optimal transmission switching instance over a candidate-complete `BalancedNetwork`."),
         (:AcOpfInstance, "AC optimal power flow instance over a `BalancedNetwork`."),
         (:McAcPfInstance, "Multiconductor AC power flow instance over a `MulticonductorNetwork`."),
         (:McAcOpfInstance, "Multiconductor AC optimal power flow instance over a `MulticonductorNetwork`."),
@@ -86,7 +87,7 @@ for (name, doc) in (
     end
 end
 
-const CalculationInstance = Union{DcPfInstance,AcPfInstance,DcOpfInstance,AcOpfInstance,
+const CalculationInstance = Union{DcPfInstance,AcPfInstance,DcOpfInstance,AcOpfInstance,AcOtsInstance,
                                   McAcPfInstance,McAcOpfInstance,LinDist3FlowOpfInstance,AcScucInstance}
 
 # Calculation solutions: the instance they answer, the termination status, and
@@ -95,6 +96,7 @@ for (name, doc) in (
         (:DcPfSolution, "DC power flow solution."),
         (:AcPfSolution, "AC power flow solution."),
         (:DcOpfSolution, "DC optimal power flow solution."),
+        (:AcOtsSolution, "AC optimal transmission switching result with explicit final branch states."),
         (:AcOpfSolution, "AC optimal power flow solution."),
         (:SocwrOpfSolution, "Second order cone (SOCWR) relaxation of an AC OPF instance; not an AC feasible point."),
         (:McAcPfSolution, "Multiconductor AC power flow solution."),
@@ -109,7 +111,7 @@ for (name, doc) in (
     end
 end
 
-const CalculationSolution = Union{DcPfSolution,AcPfSolution,DcOpfSolution,AcOpfSolution,
+const CalculationSolution = Union{DcPfSolution,AcPfSolution,DcOpfSolution,AcOpfSolution,AcOtsSolution,
                                   SocwrOpfSolution,McAcPfSolution,McAcOpfSolution,LinDist3FlowOpfSolution,AcScucSolution}
 
 """
@@ -184,6 +186,7 @@ const _INSTANCE_TYPES = Dict(
     "powerio.DcPfInstance" => (DcPfInstance, :pio_value_dc_pf_instance),
     "powerio.AcPfInstance" => (AcPfInstance, :pio_value_ac_pf_instance),
     "powerio.DcOpfInstance" => (DcOpfInstance, :pio_value_dc_opf_instance),
+    "powerio.AcOtsInstance" => (AcOtsInstance, :pio_value_ac_ots_instance),
     "powerio.AcOpfInstance" => (AcOpfInstance, :pio_value_ac_opf_instance),
     "powerio.McAcPfInstance" => (McAcPfInstance, :pio_value_mc_ac_pf_instance),
     "powerio.McAcOpfInstance" => (McAcOpfInstance, :pio_value_mc_ac_opf_instance),
@@ -195,6 +198,7 @@ const _SOLUTION_TYPES = Dict(
     "powerio.DcPfSolution" => (DcPfSolution, :pio_value_dc_pf_solution),
     "powerio.AcPfSolution" => (AcPfSolution, :pio_value_ac_pf_solution),
     "powerio.DcOpfSolution" => (DcOpfSolution, :pio_value_dc_opf_solution),
+    "powerio.AcOtsSolution" => (AcOtsSolution, :pio_value_ac_ots_solution),
     "powerio.AcOpfSolution" => (AcOpfSolution, :pio_value_ac_opf_solution),
     "powerio.SocwrOpfSolution" => (SocwrOpfSolution, :pio_value_socwr_opf_solution),
     "powerio.McAcPfSolution" => (McAcPfSolution, :pio_value_mc_ac_pf_solution),
@@ -202,6 +206,13 @@ const _SOLUTION_TYPES = Dict(
     "powerio.LinDist3FlowOpfSolution" => (LinDist3FlowOpfSolution, :pio_value_lindist3flow_opf_solution),
     "powerio.AcScucSolution" => (AcScucSolution, :pio_value_ac_scuc_solution),
 )
+
+# The borrow entry point of each calculation type, as a `Val` so that wrapping a
+# statically known type resolves its `ccall` at compile time (`juliac --trim=safe`
+# refuses the lookup by `Symbol` that the tables above would need).
+for (_, (T, entry)) in Iterators.flatten((_INSTANCE_TYPES, _SOLUTION_TYPES))
+    @eval _value_entry(::Type{$T}) = Val($(QuoteNode(entry)))
+end
 
 # The Julia type named by one structural type name, or `nothing` for a name
 # this release does not bind. Generic names nest: `powerio.TimeSeries<X>` is
@@ -234,13 +245,34 @@ function _borrow(lib::AbstractString, value::ValueHandle, entry)
     end
 end
 
+# The structural type name the library reports for a value handle.
+_value_type_name(lib::AbstractString, value::ValueHandle) =
+    @with_handles value _str(@capi lib :pio_value_type_name(_ptr(value)))
+
 # Wrap a value handle as the Julia value its structural type name selects.
 # `owner` is the module the value came from when there is one.
 function _wrap_value(lib::AbstractString, value::ValueHandle, owner::Union{ModuleHandle,Nothing})
-    name = @with_handles value _str(@capi lib :pio_value_type_name(_ptr(value)))
+    name = _value_type_name(lib, value)
     T = _julia_type(name)
     T === nothing && return UnknownValue(name, value)
     wrapped = _wrap_as(T, lib, value, owner)
+    release!(value)
+    return wrapped
+end
+
+# Wrap a value handle the caller expects to hold a `V`, a concrete bound type.
+# Nothing is chosen at run time, so the result is inferred as `V` and the call
+# compiles under `juliac --trim=safe`. A value of another type is an
+# `ArgumentError` naming both types and `origin`, where the value came from.
+function _wrap_value(::Type{V}, lib::AbstractString, value::ValueHandle,
+                     owner::Union{ModuleHandle,Nothing}, origin::AbstractString) where {V}
+    expected = _type_name(V)
+    name = _value_type_name(lib, value)
+    if name != expected
+        release!(value)
+        throw(ArgumentError("PowerIO: expected a " * expected * " from " * origin * ", found a " * name))
+    end
+    wrapped = _wrap_as(V, lib, value, owner)
     release!(value)
     return wrapped
 end
@@ -267,14 +299,10 @@ _wrap_as(::Type{OperatingPoint{BalancedNetwork}}, lib, value, owner) =
     OperatingPoint{BalancedNetwork}(OperatingPointHandle(_borrow(lib, value, Val(:pio_value_balanced_operating_point)), lib))
 _wrap_as(::Type{OperatingPoint{MulticonductorNetwork}}, lib, value, owner) =
     OperatingPoint{MulticonductorNetwork}(OperatingPointHandle(_borrow(lib, value, Val(:pio_value_multiconductor_operating_point)), lib))
-function _wrap_as(::Type{T}, lib, value, owner) where {T<:CalculationInstance}
-    sym = _INSTANCE_TYPES[_type_name(T)][2]
-    return T(CalculationInstanceHandle(_borrow(lib, value, sym), lib))
-end
-function _wrap_as(::Type{T}, lib, value, owner) where {T<:CalculationSolution}
-    sym = _SOLUTION_TYPES[_type_name(T)][2]
-    return T(CalculationSolutionHandle(_borrow(lib, value, sym), lib))
-end
+_wrap_as(::Type{T}, lib, value, owner) where {T<:CalculationInstance} =
+    T(CalculationInstanceHandle(_borrow(lib, value, _value_entry(T)), lib))
+_wrap_as(::Type{T}, lib, value, owner) where {T<:CalculationSolution} =
+    T(CalculationSolutionHandle(_borrow(lib, value, _value_entry(T)), lib))
 
 # The structural type name of a bound Julia type.
 _type_name(::Type{BalancedNetwork}) = "powerio.BalancedNetwork"
@@ -288,6 +316,7 @@ _type_name(::Type{ScenarioSet{T}}) where {T} = "powerio.ScenarioSet<" * _type_na
 _type_name(::Type{OperatingPoint{T}}) where {T} = "powerio.OperatingPoint<" * _type_name(T) * ">"
 _type_name(::Type{T}) where {T<:CalculationInstance} = "powerio." * String(nameof(T))
 _type_name(::Type{T}) where {T<:CalculationSolution} = "powerio." * String(nameof(T))
+_type_name(::Type{T}) where {T} = throw(ArgumentError("PowerIO: " * string(T) * " is not a PowerIO value type"))
 
 # The library a value's handle was allocated by.
 _lib_of(v) = getfield(getfield(v, :handle), :lib)

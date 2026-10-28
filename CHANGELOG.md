@@ -2,6 +2,49 @@
 
 ## Unreleased
 
+- Distribution load records expose the complete bounded voltage laws, including
+  voltage bands, dropout thresholds and current limits. Ordinary load reads
+  continue to work with earlier ABI 7 libraries.
+- Multiconductor power-flow instances expose their prescribed per-load active
+  and reactive powers through lazy, owner-rooted collections.
+- `network_islands(net)` returns the AC islands the powerio library computes,
+  each with its buses, reference buses, generators, HVDC ties, and whether it
+  is supplied, plus the buses typed isolated. `calc_ptdf(net; formula, solver)`
+  and `calc_lodf` return dense PTDF and LODF matrices with their branch and bus
+  axes and the reference set, from the routine the Rust and Python APIs call:
+  every reference bus is grounded, one per island, and its PTDF column is
+  zero. Both need the C ABI 7 entry points `pio_balanced_network_islands` and
+  `pio_calc_sensitivities` from powerio 0.11.7.
+- `parse(V, source)` parses a path, `IO`, or bytes as a known value type and,
+  as `parse(T, str)` does in Base, returns a `V`: `parse(BalancedNetwork,
+  "case14.m")` is the network, `parse(AcScucInstance, path)` the instance.
+  `parse(PioModule{V}, source)` returns the module instead, and
+  `parse(PioModule, source)` is the untyped form. `V` may also name a family
+  such as `TimeSeries` or `OperatingPoint`, resolved at run time. A source that
+  holds another kind of value is an `ArgumentError` naming the source and what
+  it holds. The untyped `parse` chooses the value type at run time, so only the
+  typed forms are inferable. `deserialize` takes the same forms for PowerIO IR.
+- `to_powerdata(x, T)` and `to_ac_power_data(x, T)` take the element type
+  positionally, for a network, a module, or a path, and infer a concrete
+  result, empty tables included. The keyword forms are unchanged and forward to
+  them. `LoadSeries{T}(net, ...)` is the inferable form of each `LoadSeries`
+  constructor.
+- `to_dc_opf_instance` and the other instance constructions return a concrete
+  `PioModule{I}`, and time series and scenario set entries are wrapped by their
+  static type.
+- The typed parse and the positional bridge compile with `juliac --trim=safe`:
+  handle locking no longer reads fields through the abstract `Handle` type,
+  calculation instances and solutions borrow through static entry points, and
+  the bridge reads element tables through a statically typed accessor. CI
+  builds and runs a trimmed app (`test/trim`) on every change.
+- Locking a single handle no longer allocates.
+- Add typed AC optimal transmission switching instances, options and solutions.
+  Preserve all physical branches and initial states, validate final topology and
+  transition budgets, and materialize solved networks explicitly. This data API
+  does not implement an optimizer, DC OTS, or a GO Challenge 3 writer.
+
+## 0.11.6
+
 - Multiconductor PF/OPF construction now rejects physical islands without a voltage source
   instead of assigning an implicit anchor. Parsing retains those islands;
   callers must resolve de-energized islands explicitly before construction.

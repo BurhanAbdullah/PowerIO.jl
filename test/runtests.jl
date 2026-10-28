@@ -26,6 +26,8 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_network.jl")            # BalancedNetwork element tables
     include("test_geography.jl")
     include("test_dist.jl")               # MulticonductorNetwork element tables
+    include("test_bounded_loads.jl")
+
     include("test_sincal.jl")            # reader selections and source acquisition
     include("test_source_boundaries.jl") # reference-aware PF and source views
     include("test_collections.jl")        # TimeSeries, ScenarioSet, instances, solutions
@@ -33,10 +35,12 @@ fixture(parts...) = joinpath(DATA, parts...)
     include("test_handle_operations.jl")
     include("test_updates.jl")            # typed updates and apply_updates!
     include("test_connectivity.jl")       # DetailedConnectivity tables
+    include("test_ots.jl")                # typed switching options, topology, ownership and solutions
     include("test_scuc.jl")               # AC SCUC instance inputs
     include("test_contingency.jl")        # PSS/E contingency, subsystem, monitored sets
     include("test_geo.jl")                # geographic layers
     include("test_matrix.jl")             # DC calculations and admittance matrices
+    include("test_sensitivity.jl")        # AC islands, PTDF, and LODF
     include("test_bridges.jl")            # PowerModels and ExaModelsPower bridges
     include("test_aqua.jl")               # Aqua quality checks
 end

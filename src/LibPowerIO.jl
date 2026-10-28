@@ -21,6 +21,10 @@ mutable struct PioDcOpfPreparation end
 
 mutable struct PioDcOperators end
 
+mutable struct PioIslands end
+
+mutable struct PioSensitivities end
+
 mutable struct PioApparentPower end
 
 mutable struct PioBalancedNetwork end
@@ -433,6 +437,37 @@ struct PioPrescribedTerminalPowerView
     load::PioStringView
     terminal_count::Csize_t
     voltage_model::PioStringView
+end
+
+struct PioDistLoadVoltageModelView
+    model::PioStringView
+    nominal_voltage_v::PioF64View
+    active_power_constant_impedance::PioF64View
+    active_power_constant_current::PioF64View
+    active_power_constant_power::PioF64View
+    reactive_power_constant_impedance::PioF64View
+    reactive_power_constant_current::PioF64View
+    reactive_power_constant_power::PioF64View
+    active_power_exponent::PioF64View
+    reactive_power_exponent::PioF64View
+    voltage_low_pu::Cdouble
+    has_voltage_low::Bool
+    voltage_min_pu::Cdouble
+    has_voltage_min::Bool
+    voltage_max_pu::Cdouble
+    has_voltage_max::Bool
+    cutoff_pu::Cdouble
+    has_cutoff::Bool
+    current_limit_pu::Cdouble
+    has_current_limit::Bool
+end
+
+struct PioPrescribedLoadDetailsView
+    load::PioStringView
+    terminal_count::Csize_t
+    active_power_w::PioF64View
+    reactive_power_var::PioF64View
+    voltage_model::PioDistLoadVoltageModelView
 end
 
 struct PioTerminalPowerView
@@ -1682,6 +1717,16 @@ struct PioMulticonductorLoadView
     reactive_power_exponent::PioF64View
 end
 
+struct PioMulticonductorLoadDetailsView
+    name::PioStringView
+    bus::PioStringView
+    terminal_map_count::Csize_t
+    configuration::PioStringView
+    active_power_nominal_w::PioF64View
+    reactive_power_nominal_var::PioF64View
+    voltage_model::PioDistLoadVoltageModelView
+end
+
 struct PioMulticonductorGeneratorView
     name::PioStringView
     bus::PioStringView
@@ -1802,10 +1847,86 @@ struct PioMulticonductorCommandView
     args::PioStringView
 end
 
+struct PioIslandView
+    bus_indices::PioSizeView
+    bus_ids::PioSizeView
+    reference_bus_indices::PioSizeView
+    reference_bus_ids::PioSizeView
+    generator_rows::PioSizeView
+    hvdc_rows::PioSizeView
+    supplied::Bool
+end
+
 struct PioVoltageSourceBoundaryView
     source::PioVoltageSourceView
     reference_terminal::PioStringView
     has_reference_terminal::Bool
+end
+
+struct PioBranchSwitchingCost
+    id::PioStringView
+    open_cost::Cdouble
+    close_cost::Cdouble
+end
+
+struct PioBranchCurrentLimit
+    id::PioStringView
+    from_pu::Cdouble
+    to_pu::Cdouble
+    has_from_pu::Bool
+    has_to_pu::Bool
+end
+
+struct PioAcOtsOptions
+    switchable::PioStringView
+    identities::Ptr{PioStringView}
+    identities_len::Csize_t
+    switching_costs::Ptr{PioBranchSwitchingCost}
+    switching_costs_len::Csize_t
+    islanding::PioStringView
+    max_open::Csize_t
+    has_max_open::Bool
+    max_switched::Csize_t
+    has_max_switched::Bool
+    current_limits::PioStringView
+    stated_current_limits::Ptr{PioBranchCurrentLimit}
+    stated_current_limits_len::Csize_t
+end
+
+struct PioAcOtsOptionsView
+    switchable::PioStringView
+    islanding::PioStringView
+    current_limits::PioStringView
+    branch_count::Csize_t
+    max_open::Csize_t
+    has_max_open::Bool
+    max_switched::Csize_t
+    has_max_switched::Bool
+end
+
+struct PioAcOtsBranchView
+    id::PioStringView
+    initial_closed::Bool
+    switchable::Bool
+    has_switching_cost::Bool
+    open_cost::Cdouble
+    close_cost::Cdouble
+    stated_from_pu::Cdouble
+    stated_to_pu::Cdouble
+    has_stated_from_pu::Bool
+    has_stated_to_pu::Bool
+    current_from_pu::Cdouble
+    current_to_pu::Cdouble
+    has_current_from_pu::Bool
+    has_current_to_pu::Bool
+end
+
+struct PioAcOtsSolutionView
+    branch_count::Csize_t
+    branches_open::Csize_t
+    branches_switched::Csize_t
+    switching_cost::Cdouble
+    objective::Cdouble
 end
 
 function pio_abi_version()
@@ -3294,6 +3415,22 @@ end
 
 function pio_mc_ac_pf_instance_load_at(instance, index, output, error, fptr)
     @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioPrescribedTerminalPowerView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_mc_ac_pf_instance_load_details_at(instance, index, output, error)
+    @ccall libpowerio_capi.pio_mc_ac_pf_instance_load_details_at(instance::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioPrescribedLoadDetailsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_mc_ac_pf_instance_load_details_at(instance, index, output, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioPrescribedLoadDetailsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_mc_ac_pf_instance_load_terminal_name_at(instance, load_index, terminal_index, output, error)
+    @ccall libpowerio_capi.pio_mc_ac_pf_instance_load_terminal_name_at(instance::Ptr{PioCalculationInstance}, load_index::Csize_t, terminal_index::Csize_t, output::Ptr{PioStringView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_mc_ac_pf_instance_load_terminal_name_at(instance, load_index, terminal_index, output, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, load_index::Csize_t, terminal_index::Csize_t, output::Ptr{PioStringView}, error::Ptr{Ptr{PioError}})::Bool
 end
 
 function pio_mc_ac_pf_instance_load_terminal_at(instance, load_index, terminal_index, output, error)
@@ -4824,6 +4961,14 @@ function pio_multiconductor_network_load_at(network, index, output, error, fptr)
     @ccall ($fptr)(network::Ptr{PioMulticonductorNetwork}, index::Csize_t, output::Ptr{PioMulticonductorLoadView}, error::Ptr{Ptr{PioError}})::Bool
 end
 
+function pio_multiconductor_network_load_details_at(network, index, output, error)
+    @ccall libpowerio_capi.pio_multiconductor_network_load_details_at(network::Ptr{PioMulticonductorNetwork}, index::Csize_t, output::Ptr{PioMulticonductorLoadDetailsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_multiconductor_network_load_details_at(network, index, output, error, fptr)
+    @ccall ($fptr)(network::Ptr{PioMulticonductorNetwork}, index::Csize_t, output::Ptr{PioMulticonductorLoadDetailsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
 function pio_multiconductor_network_load_terminal_at(network, load_index, terminal_index, output, error)
     @ccall libpowerio_capi.pio_multiconductor_network_load_terminal_at(network::Ptr{PioMulticonductorNetwork}, load_index::Csize_t, terminal_index::Csize_t, output::Ptr{PioStringView}, error::Ptr{Ptr{PioError}})::Bool
 end
@@ -5704,6 +5849,166 @@ function pio_dc_operators_release(operators, fptr)
     @ccall ($fptr)(operators::Ptr{PioDcOperators})::Cvoid
 end
 
+function pio_balanced_network_islands(network, error)
+    @ccall libpowerio_capi.pio_balanced_network_islands(network::Ptr{PioBalancedNetwork}, error::Ptr{Ptr{PioError}})::Ptr{PioIslands}
+end
+
+function pio_balanced_network_islands(network, error, fptr)
+    @ccall ($fptr)(network::Ptr{PioBalancedNetwork}, error::Ptr{Ptr{PioError}})::Ptr{PioIslands}
+end
+
+function pio_islands_count(islands)
+    @ccall libpowerio_capi.pio_islands_count(islands::Ptr{PioIslands})::Csize_t
+end
+
+function pio_islands_count(islands, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands})::Csize_t
+end
+
+function pio_islands_at(islands, index, output, error)
+    @ccall libpowerio_capi.pio_islands_at(islands::Ptr{PioIslands}, index::Csize_t, output::Ptr{PioIslandView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_islands_at(islands, index, output, error, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands}, index::Csize_t, output::Ptr{PioIslandView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_islands_isolated_bus_indices(islands)
+    @ccall libpowerio_capi.pio_islands_isolated_bus_indices(islands::Ptr{PioIslands})::PioSizeView
+end
+
+function pio_islands_isolated_bus_indices(islands, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands})::PioSizeView
+end
+
+function pio_islands_isolated_bus_ids(islands)
+    @ccall libpowerio_capi.pio_islands_isolated_bus_ids(islands::Ptr{PioIslands})::PioSizeView
+end
+
+function pio_islands_isolated_bus_ids(islands, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands})::PioSizeView
+end
+
+function pio_islands_retain(islands)
+    @ccall libpowerio_capi.pio_islands_retain(islands::Ptr{PioIslands})::Ptr{PioIslands}
+end
+
+function pio_islands_retain(islands, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands})::Ptr{PioIslands}
+end
+
+function pio_islands_release(islands)
+    @ccall libpowerio_capi.pio_islands_release(islands::Ptr{PioIslands})::Cvoid
+end
+
+function pio_islands_release(islands, fptr)
+    @ccall ($fptr)(islands::Ptr{PioIslands})::Cvoid
+end
+
+function pio_calc_sensitivities(network, formula, formula_len, solver, solver_len, error)
+    @ccall libpowerio_capi.pio_calc_sensitivities(network::Ptr{PioBalancedNetwork}, formula::Ptr{Cchar}, formula_len::Csize_t, solver::Ptr{Cchar}, solver_len::Csize_t, error::Ptr{Ptr{PioError}})::Ptr{PioSensitivities}
+end
+
+function pio_calc_sensitivities(network, formula, formula_len, solver, solver_len, error, fptr)
+    @ccall ($fptr)(network::Ptr{PioBalancedNetwork}, formula::Ptr{Cchar}, formula_len::Csize_t, solver::Ptr{Cchar}, solver_len::Csize_t, error::Ptr{Ptr{PioError}})::Ptr{PioSensitivities}
+end
+
+function pio_sensitivities_n_buses(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_n_buses(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_n_buses(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_n_branches(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_n_branches(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_n_branches(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_bus_ids(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_bus_ids(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_bus_ids(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_branch_rows(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_branch_rows(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_branch_rows(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_branch_identity(sensitivities, index)
+    @ccall libpowerio_capi.pio_sensitivities_branch_identity(sensitivities::Ptr{PioSensitivities}, index::Csize_t)::PioStringView
+end
+
+function pio_sensitivities_branch_identity(sensitivities, index, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities}, index::Csize_t)::PioStringView
+end
+
+function pio_sensitivities_reference_bus_indices(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_reference_bus_indices(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_reference_bus_indices(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioSizeView
+end
+
+function pio_sensitivities_ptdf(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_ptdf(sensitivities::Ptr{PioSensitivities})::PioF64View
+end
+
+function pio_sensitivities_ptdf(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioF64View
+end
+
+function pio_sensitivities_lodf(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_lodf(sensitivities::Ptr{PioSensitivities})::PioF64View
+end
+
+function pio_sensitivities_lodf(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioF64View
+end
+
+function pio_sensitivities_solver_path(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_solver_path(sensitivities::Ptr{PioSensitivities})::PioStringView
+end
+
+function pio_sensitivities_solver_path(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::PioStringView
+end
+
+function pio_sensitivities_reduced_dimension(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_reduced_dimension(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_reduced_dimension(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::Csize_t
+end
+
+function pio_sensitivities_retain(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_retain(sensitivities::Ptr{PioSensitivities})::Ptr{PioSensitivities}
+end
+
+function pio_sensitivities_retain(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::Ptr{PioSensitivities}
+end
+
+function pio_sensitivities_release(sensitivities)
+    @ccall libpowerio_capi.pio_sensitivities_release(sensitivities::Ptr{PioSensitivities})::Cvoid
+end
+
+function pio_sensitivities_release(sensitivities, fptr)
+    @ccall ($fptr)(sensitivities::Ptr{PioSensitivities})::Cvoid
+end
+
 function pio_calc_incidence_matrix(network, formula, formula_len, error)
     @ccall libpowerio_capi.pio_calc_incidence_matrix(network::Ptr{PioBalancedNetwork}, formula::Ptr{Cchar}, formula_len::Csize_t, error::Ptr{Ptr{PioError}})::Ptr{PioSparseMatrix}
 end
@@ -5894,6 +6199,110 @@ end
 
 function pio_mc_ac_pf_instance_source_boundary_at(instance, index, output, error, fptr)
     @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioVoltageSourceBoundaryView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_value_ac_ots_instance(value, error)
+    @ccall libpowerio_capi.pio_value_ac_ots_instance(value::Ptr{PioValueHandle}, error::Ptr{Ptr{PioError}})::Ptr{PioCalculationInstance}
+end
+
+function pio_value_ac_ots_instance(value, error, fptr)
+    @ccall ($fptr)(value::Ptr{PioValueHandle}, error::Ptr{Ptr{PioError}})::Ptr{PioCalculationInstance}
+end
+
+function pio_value_ac_ots_solution(value, error)
+    @ccall libpowerio_capi.pio_value_ac_ots_solution(value::Ptr{PioValueHandle}, error::Ptr{Ptr{PioError}})::Ptr{PioCalculationSolution}
+end
+
+function pio_value_ac_ots_solution(value, error, fptr)
+    @ccall ($fptr)(value::Ptr{PioValueHandle}, error::Ptr{Ptr{PioError}})::Ptr{PioCalculationSolution}
+end
+
+function pio_module_to_ac_ots_instance(_module, error)
+    @ccall libpowerio_capi.pio_module_to_ac_ots_instance(_module::Ptr{PioModule}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_module_to_ac_ots_instance(_module, error, fptr)
+    @ccall ($fptr)(_module::Ptr{PioModule}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_module_to_ac_ots_instance_with_options(_module, options, error)
+    @ccall libpowerio_capi.pio_module_to_ac_ots_instance_with_options(_module::Ptr{PioModule}, options::Ptr{PioAcOtsOptions}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_module_to_ac_ots_instance_with_options(_module, options, error, fptr)
+    @ccall ($fptr)(_module::Ptr{PioModule}, options::Ptr{PioAcOtsOptions}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_instance_create(base, options, error)
+    @ccall libpowerio_capi.pio_ac_ots_instance_create(base::Ptr{PioCalculationInstance}, options::Ptr{PioAcOtsOptions}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_instance_create(base, options, error, fptr)
+    @ccall ($fptr)(base::Ptr{PioCalculationInstance}, options::Ptr{PioAcOtsOptions}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_instance_options(instance, output, error)
+    @ccall libpowerio_capi.pio_ac_ots_instance_options(instance::Ptr{PioCalculationInstance}, output::Ptr{PioAcOtsOptionsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_options(instance, output, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, output::Ptr{PioAcOtsOptionsView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_branch_at(instance_handle, index, output, error)
+    @ccall libpowerio_capi.pio_ac_ots_instance_branch_at(instance_handle::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioAcOtsBranchView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_branch_at(instance_handle, index, output, error, fptr)
+    @ccall ($fptr)(instance_handle::Ptr{PioCalculationInstance}, index::Csize_t, output::Ptr{PioAcOtsBranchView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_validate_topology(instance, branch_closed, branch_count, switching_cost, error)
+    @ccall libpowerio_capi.pio_ac_ots_instance_validate_topology(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, switching_cost::Ptr{Cdouble}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_validate_topology(instance, branch_closed, branch_count, switching_cost, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, switching_cost::Ptr{Cdouble}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_instance_fix_topology(instance, branch_closed, branch_count, error)
+    @ccall libpowerio_capi.pio_ac_ots_instance_fix_topology(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_instance_fix_topology(instance, branch_closed, branch_count, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_solution_create(instance, branch_closed, branch_count, ac_solution, error)
+    @ccall libpowerio_capi.pio_ac_ots_solution_create(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, ac_solution::Ptr{PioCalculationSolution}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_solution_create(instance, branch_closed, branch_count, ac_solution, error, fptr)
+    @ccall ($fptr)(instance::Ptr{PioCalculationInstance}, branch_closed::Ptr{UInt8}, branch_count::Csize_t, ac_solution::Ptr{PioCalculationSolution}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_solution_summary(solution, output, error)
+    @ccall libpowerio_capi.pio_ac_ots_solution_summary(solution::Ptr{PioCalculationSolution}, output::Ptr{PioAcOtsSolutionView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_solution_summary(solution, output, error, fptr)
+    @ccall ($fptr)(solution::Ptr{PioCalculationSolution}, output::Ptr{PioAcOtsSolutionView}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_solution_branch_closed_at(solution, index, output, error)
+    @ccall libpowerio_capi.pio_ac_ots_solution_branch_closed_at(solution::Ptr{PioCalculationSolution}, index::Csize_t, output::Ptr{Bool}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_solution_branch_closed_at(solution, index, output, error, fptr)
+    @ccall ($fptr)(solution::Ptr{PioCalculationSolution}, index::Csize_t, output::Ptr{Bool}, error::Ptr{Ptr{PioError}})::Bool
+end
+
+function pio_ac_ots_solution_materialize(solution, error)
+    @ccall libpowerio_capi.pio_ac_ots_solution_materialize(solution::Ptr{PioCalculationSolution}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
+end
+
+function pio_ac_ots_solution_materialize(solution, error, fptr)
+    @ccall ($fptr)(solution::Ptr{PioCalculationSolution}, error::Ptr{Ptr{PioError}})::Ptr{PioModule}
 end
 
 const PIO_ABI_VERSION = 7

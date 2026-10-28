@@ -50,7 +50,8 @@ using .LibPowerIO: LibPowerIO, PioNamedBufferView, PioParseOptions, PioSincalRea
     PioModuleHistoryParameterView, PioModuleProducerView, PioModuleSourceView,
     PioMulticonductorBusView, PioMulticonductorCapacitorView, PioMulticonductorCommandView,
     PioMulticonductorGeneratorView, PioMulticonductorGeoView, PioMulticonductorLineCodeView,
-    PioMulticonductorLineView, PioMulticonductorLoadView, PioMulticonductorLocationView,
+    PioMulticonductorLineView, PioMulticonductorLoadView, PioMulticonductorLoadDetailsView,
+    PioPrescribedLoadDetailsView, PioMulticonductorLocationView,
     PioMulticonductorNetworkCountsView, PioMulticonductorShuntView,
     PioMulticonductorSwitchView, PioMulticonductorTransformerView,
     PioMulticonductorTransformerWindingView, PioMulticonductorUntypedObjectView,
@@ -98,9 +99,17 @@ export calc_incidence_matrix, calc_branch_susceptances, calc_bus_susceptance_mat
        calc_admittance_matrix, calc_bprime_matrix, calc_bdoubleprime_matrix, calc_branch_admittances,
        BusMappedMatrix
 
+# AC islands and DC sensitivity factors.
+export network_islands, NetworkIslands, Island, calc_ptdf, calc_lodf, PtdfMatrix, LodfMatrix
+
 # Calculation constructions and solution access.
 export to_dc_pf_instance, to_ac_pf_instance, to_dc_opf_instance, to_ac_opf_instance,
        to_mc_ac_pf_instance, to_mc_ac_opf_instance, to_lindist3flow_opf_instance, time_count
+
+# AC optimal transmission switching.
+export AcOtsInstance, AcOtsSolution, AcOtsOptions, BranchSelection,
+       BranchSwitchingCost, BranchCurrentLimit, to_ac_ots_instance,
+       validate_topology, switching_cost, fix_topology, materialize_ac_ots_solution
 
 # Typed updates.
 export ActivePower, ReactivePower, ApparentPower, OperatingPointUpdate, NetworkUpdate,
@@ -155,10 +164,12 @@ include("dense.jl")          # to_dense
 include("graphs.jl")         # to_graph
 include("collections.jl")    # TimeSeries, ScenarioSet, OperatingPoint
 include("contingency.jl")    # PSS/E contingency, subsystem, and monitored sets
-include("instances.jl")      # calculation instances, solutions, to_*_instance
+include("instances.jl")     # calculation instances, solutions, to_*_instance
+include("ots.jl")           # AC optimal transmission switching
 include("scuc.jl")           # AC SCUC instance inputs
 include("updates.jl")        # typed updates and apply_updates!
 include("calc.jl")           # the eight DC calculations from the library
+include("sensitivity.jl")    # AC islands, PTDF, and LODF from the library
 include("ybus.jl")           # admittance matrices assembled in Julia
 include("powermodels.jl")    # PowerModels.jl network data bridge
 include("exa.jl")            # ExaModelsPower bridge and LoadSeries

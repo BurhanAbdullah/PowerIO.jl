@@ -34,9 +34,14 @@ const EXPORTED_NAMES = Set([
     :calc_branch_flow_dc, :calc_bus_injection_dc, :calc_dc_index_map,
     :calc_admittance_matrix, :calc_bprime_matrix, :calc_bdoubleprime_matrix, :calc_branch_admittances,
     :BusMappedMatrix,
+    # AC islands and DC sensitivity factors
+    :network_islands, :NetworkIslands, :Island, :calc_ptdf, :calc_lodf, :PtdfMatrix, :LodfMatrix,
     # calculation constructions and solution access
     :to_dc_pf_instance, :to_ac_pf_instance, :to_dc_opf_instance, :to_ac_opf_instance,
     :to_mc_ac_pf_instance, :to_mc_ac_opf_instance, :to_lindist3flow_opf_instance, :time_count,
+    :AcOtsInstance, :AcOtsSolution, :AcOtsOptions, :BranchSelection,
+    :BranchSwitchingCost, :BranchCurrentLimit, :to_ac_ots_instance,
+    :validate_topology, :switching_cost, :fix_topology, :materialize_ac_ots_solution,
     # typed updates
     :ActivePower, :ReactivePower, :ApparentPower, :OperatingPointUpdate, :NetworkUpdate,
     :UpdateReport, :UpdateChange, :apply_updates!,
@@ -99,6 +104,14 @@ const RETIRED_NAMES = [
     @test hasmethod(Base.parse, Tuple{AbstractString})
     @test hasmethod(Base.parse, Tuple{IO})
     @test hasmethod(Base.parse, Tuple{AbstractVector{UInt8}})
+    @test hasmethod(Base.parse, Tuple{Type{BalancedNetwork},AbstractString})
+    @test hasmethod(Base.parse, Tuple{Type{AcScucInstance},IO})
+    @test hasmethod(Base.parse, Tuple{Type{BalancedNetwork},AbstractVector{UInt8}})
+    @test hasmethod(Base.parse, Tuple{Type{PioModule{BalancedNetwork}},AbstractString})
+    @test hasmethod(Base.parse, Tuple{Type{PioModule},IO})
+    @test hasmethod(deserialize, Tuple{Type{BalancedNetwork},AbstractString})
+    @test hasmethod(deserialize, Tuple{Type{PioModule{BalancedNetwork}},AbstractString})
+    @test hasmethod(to_powerdata, Tuple{PioModule{BalancedNetwork},Type{Float32}})
     @test PowerIO.PIO_ABI_VERSION == 7
 
     @testset "documentation names no removed operation" begin
