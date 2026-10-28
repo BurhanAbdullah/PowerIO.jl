@@ -164,3 +164,6 @@ pio_sensitivities_retain	Sensitivity result lifecycle awaits a dedicated Julia w
 pio_sensitivities_solver_path	Sensitivity solver metadata awaits a typed Julia sensitivity view
 pio_value_ac_ots_instance	AC optimal transmission switching value access awaits typed Julia value dispatch
 pio_value_ac_ots_solution	AC optimal transmission switching value access awaits typed Julia value dispatch
+pio_mc_ac_pf_instance_load_details_at	multiconductor AC load detail rows are C-only pending a typed Julia load-detail API
+pio_mc_ac_pf_instance_load_terminal_name_at	multiconductor AC load terminal names are C-only pending a typed Julia load-detail API
+pio_multiconductor_network_load_details_at	multiconductor network load detail rows are C-only pending a typed Julia load-detail API
