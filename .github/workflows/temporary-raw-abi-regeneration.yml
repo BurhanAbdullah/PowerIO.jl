@@ -1,0 +1,33 @@
+name: Temporary raw ABI regeneration
+on:
+  push:
+    branches:
+      - fix/reference-slack-semantics
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: julia-actions/setup-julia@da908477b5db94c10ffce8cfea9f2b3b9d5db687
+        with:
+          version: '1'
+      - name: Check out current native header
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: eigenergy/powerio
+          ref: main
+          path: powerio
+      - name: Generate Julia C ABI bindings
+        run: |
+          julia --project=gen -e 'using Pkg; Pkg.instantiate()'
+          julia --project=gen gen/generate.jl powerio/powerio-capi/include/powerio.h
+      - name: Upload generated file
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-libpowerio
+          path: src/LibPowerIO.jl
+          if-no-files-found: error
+          retention-days: 1
