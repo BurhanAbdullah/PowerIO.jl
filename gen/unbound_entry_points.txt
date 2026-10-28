@@ -131,3 +131,8 @@ pio_reactive_power_value	quantity unit and value readers are C only
 pio_ac_scuc_instance_contingency_get	a Dict over instance.inputs covers the lookup by source identity
 pio_ac_scuc_instance_device_get	a Dict over instance.inputs covers the lookup by source identity
 pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by source identity
+
+# Additional ABI 7 C-only multiconductor load detail entry points retained for this companion.
+pio_mc_ac_pf_instance_load_details_at	multiconductor AC load detail rows are C-only pending a typed Julia load-detail API
+pio_mc_ac_pf_instance_load_terminal_name_at	multiconductor AC load terminal names are C-only pending a typed Julia load-detail API
+pio_multiconductor_network_load_details_at	multiconductor network load detail rows are C-only pending a typed Julia load-detail API
