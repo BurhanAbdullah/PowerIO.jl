@@ -132,7 +132,34 @@ pio_ac_scuc_instance_contingency_get	a Dict over instance.inputs covers the look
 pio_ac_scuc_instance_device_get	a Dict over instance.inputs covers the lookup by source identity
 pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by source identity
 
-# Additional ABI 7 C-only entry points retained for the current PowerIO companion.
-pio_mc_ac_pf_instance_load_details_at	multiconductor AC load detail rows are C-only pending a typed Julia load-detail API
-pio_mc_ac_pf_instance_load_terminal_name_at	multiconductor AC load terminal names are C-only pending a typed Julia load-detail API
-pio_multiconductor_network_load_details_at	multiconductor network load detail rows are C-only pending a typed Julia load-detail API
+# New ABI 7 island, sensitivity, and AC OTS entry points not yet wrapped by Julia.
+pio_ac_ots_instance_branch_at	AC optimal transmission switching instance tables are C-only pending typed Julia wrappers
+pio_ac_ots_instance_create	AC optimal transmission switching instance construction is C-only pending typed Julia wrappers
+pio_ac_ots_instance_fix_topology	AC optimal transmission switching topology operations are C-only pending typed Julia wrappers
+pio_ac_ots_instance_options	AC optimal transmission switching instance options are C-only pending typed Julia wrappers
+pio_ac_ots_instance_validate_topology	AC optimal transmission switching topology operations are C-only pending typed Julia wrappers
+pio_ac_ots_solution_branch_closed_at	AC optimal transmission switching solution rows are C-only pending typed Julia wrappers
+pio_ac_ots_solution_create	AC optimal transmission switching solution construction is C-only pending typed Julia wrappers
+pio_ac_ots_solution_materialize	AC optimal transmission switching solution materialization is C-only pending typed Julia wrappers
+pio_ac_ots_solution_summary	AC optimal transmission switching solution summaries are C-only pending typed Julia wrappers
+pio_balanced_network_islands	balanced-network island access is C-only pending typed Julia wrappers
+pio_calc_sensitivities	sensitivity calculation is C-only pending typed Julia wrapper
+pio_islands_at	island record access is C-only pending typed Julia wrappers
+pio_islands_count	island record access is C-only pending typed Julia wrappers
+pio_islands_isolated_bus_ids	island de-energized bus access is C-only pending typed Julia wrappers
+pio_islands_isolated_bus_indices	island de-energized bus access is C-only pending typed Julia wrappers
+pio_islands_release	island handle release is C-only pending typed Julia wrappers
+pio_module_to_ac_ots_instance	AC optimal transmission switching module conversion is C-only pending typed Julia wrappers
+pio_module_to_ac_ots_instance_with_options	AC optimal transmission switching module conversion with options is C-only pending typed Julia wrappers
+pio_sensitivities_branch_identity	sensitivity branch identity access is C-only pending typed Julia wrappers
+pio_sensitivities_branch_rows	sensitivity branch axis access is C-only pending typed Julia wrappers
+pio_sensitivities_bus_ids	sensitivity bus axis access is C-only pending typed Julia wrappers
+pio_sensitivities_lodf	LODF matrix access is C-only pending typed Julia wrappers
+pio_sensitivities_n_branches	sensitivity branch count is C-only pending typed Julia wrappers
+pio_sensitivities_n_buses	sensitivity bus count is C-only pending typed Julia wrappers
+pio_sensitivities_ptdf	PTDF matrix access is C-only pending typed Julia wrappers
+pio_sensitivities_reference_bus_indices	sensitivity reference-bus access is C-only pending typed Julia wrappers
+pio_sensitivities_release	sensitivity handle release is C-only pending typed Julia wrappers
+pio_sensitivities_solver_path	sensitivity solver path access is C-only pending typed Julia wrappers
+pio_value_ac_ots_instance	AC optimal transmission switching instance value access is C-only pending typed Julia wrappers
+pio_value_ac_ots_solution	AC optimal transmission switching solution value access is C-only pending typed Julia wrappers
