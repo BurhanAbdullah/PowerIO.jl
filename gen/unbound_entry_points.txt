@@ -131,3 +131,36 @@ pio_reactive_power_value	quantity unit and value readers are C only
 pio_ac_scuc_instance_contingency_get	a Dict over instance.inputs covers the lookup by source identity
 pio_ac_scuc_instance_device_get	a Dict over instance.inputs covers the lookup by source identity
 pio_ac_scuc_instance_shunt_get	a Dict over instance.inputs covers the lookup by source identity
+# Newer C ABI 7 APIs not yet exposed by this Julia binding.
+pio_ac_ots_instance_branch_at	AC optimal-transmission-switching instance tables are not yet exposed in Julia
+pio_ac_ots_instance_create	AC optimal-transmission-switching instance construction is not yet exposed in Julia
+pio_ac_ots_instance_fix_topology	AC optimal-transmission-switching topology mutation is not yet exposed in Julia
+pio_ac_ots_instance_options	AC optimal-transmission-switching options are not yet exposed in Julia
+pio_ac_ots_instance_validate_topology	AC optimal-transmission-switching topology validation is not yet exposed in Julia
+pio_ac_ots_solution_branch_closed_at	AC optimal-transmission-switching solution tables are not yet exposed in Julia
+pio_ac_ots_solution_create	AC optimal-transmission-switching solution construction is not yet exposed in Julia
+pio_ac_ots_solution_materialize	AC optimal-transmission-switching solution materialization is not yet exposed in Julia
+pio_ac_ots_solution_summary	AC optimal-transmission-switching solution summaries are not yet exposed in Julia
+pio_balanced_network_islands	island-analysis result APIs are not yet exposed in Julia
+pio_calc_sensitivities	network-sensitivity calculations are not yet exposed in Julia
+pio_islands_at	island-analysis result APIs are not yet exposed in Julia
+pio_islands_count	island-analysis result APIs are not yet exposed in Julia
+pio_islands_isolated_bus_ids	island-analysis result APIs are not yet exposed in Julia
+pio_islands_isolated_bus_indices	island-analysis result APIs are not yet exposed in Julia
+pio_islands_release	island-analysis handle lifecycle is not yet exposed in Julia
+pio_islands_retain	island-analysis handle lifecycle is not yet exposed in Julia
+pio_module_to_ac_ots_instance	AC optimal-transmission-switching conversion is not yet exposed in Julia
+pio_module_to_ac_ots_instance_with_options	AC optimal-transmission-switching conversion with options is not yet exposed in Julia
+pio_sensitivities_branch_identity	network-sensitivity result metadata is not yet exposed in Julia
+pio_sensitivities_branch_rows	network-sensitivity result metadata is not yet exposed in Julia
+pio_sensitivities_bus_ids	network-sensitivity result axes are not yet exposed in Julia
+pio_sensitivities_lodf	network-sensitivity result matrices are not yet exposed in Julia
+pio_sensitivities_n_branches	network-sensitivity result dimensions are not yet exposed in Julia
+pio_sensitivities_n_buses	network-sensitivity result dimensions are not yet exposed in Julia
+pio_sensitivities_ptdf	network-sensitivity result matrices are not yet exposed in Julia
+pio_sensitivities_reference_bus_indices	network-sensitivity reference-bus metadata is not yet exposed in Julia
+pio_sensitivities_release	network-sensitivity handle lifecycle is not yet exposed in Julia
+pio_sensitivities_retain	network-sensitivity handle lifecycle is not yet exposed in Julia
+pio_sensitivities_solver_path	network-sensitivity solver metadata is not yet exposed in Julia
+pio_value_ac_ots_instance	AC optimal-transmission-switching value wrapping is not yet exposed in Julia
+pio_value_ac_ots_solution	AC optimal-transmission-switching value wrapping is not yet exposed in Julia
